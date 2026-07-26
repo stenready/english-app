@@ -1,0 +1,32 @@
+{
+  "name": "server-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "imports": {
+    "#app": "./src/app.js",
+    "#config/*": "./src/config/*.js",
+    "#constants/*": "./src/constants/*.js",
+    "#controllers/*": "./src/controllers/*/index.js",
+    "#errors/*": "./src/errors/*.js",
+    "#middlewares/*": "./src/middlewares/*.js",
+    "#repositories/*": "./src/repositories/*/index.js",
+    "#routes/*": "./src/routes/*.js",
+    "#services/*": "./src/services/*/index.js"
+  },
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "check": "node --check src/app.js && node --check src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "morgan": "^1.11.0"
+  }
+}
