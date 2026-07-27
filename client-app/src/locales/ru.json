@@ -1,0 +1,10 @@
+{
+  "navigation.main": "Основная навигация",
+  "navigation.home": "Главная",
+  "navigation.about": "О проекте",
+  "navigation.language": "Язык",
+  "home.title": "Vue 3 + Vite",
+  "home.description": "Router, Pinia и Tailwind подключены.",
+  "home.counter": "Счётчик: {count} (x2: {doubleCount})",
+  "about.title": "О проекте"
+}
