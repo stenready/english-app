@@ -1,0 +1,11 @@
+{
+  "navigation.main": "Основная навигация",
+  "navigation.home": "Главная",
+  "navigation.about": "О проекте",
+  "navigation.language": "Язык",
+  "home.title": "Главная",
+  "about.title": "О проекте",
+  "notFound.title": "Страница не найдена",
+  "notFound.description": "Такой страницы не существует.",
+  "notFound.backHome": "На главную"
+}

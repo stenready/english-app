@@ -1,0 +1,11 @@
+{
+  "navigation.main": "Основна навігація",
+  "navigation.home": "Головна",
+  "navigation.about": "Про проєкт",
+  "navigation.language": "Мова",
+  "home.title": "Головна",
+  "about.title": "Про проєкт",
+  "notFound.title": "Сторінку не знайдено",
+  "notFound.description": "Такої сторінки не існує.",
+  "notFound.backHome": "На головну"
+}

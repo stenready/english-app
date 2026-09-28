@@ -1,0 +1,11 @@
+{
+  "navigation.main": "Main navigation",
+  "navigation.home": "Home",
+  "navigation.about": "About",
+  "navigation.language": "Language",
+  "home.title": "Home",
+  "about.title": "About",
+  "notFound.title": "Page not found",
+  "notFound.description": "The page you are looking for does not exist.",
+  "notFound.backHome": "Back to home"
+}
