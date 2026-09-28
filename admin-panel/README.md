@@ -1,5 +1,7 @@
 # Admin Panel
 
+← [Full-stack App](../README.md)
+
 **Українська** | [English](./README.en.md)
 
 Адмін-панель застосунку для вивчення англійської мови.
