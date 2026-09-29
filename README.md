@@ -61,7 +61,11 @@ feat(admin-panel): короткий опис
 fix(backend-node-app): короткий опис
 ```
 
-Тип — тільки `feat` або `fix`. Scope — назва частини: `admin-panel`, `client-app` або `backend-node-app`.
+Тип — тільки `feat` або `fix`. Scope — назва частини: `admin-panel`, `client-app`, `backend-node-app` або `root` — для файлів у корені.
+
+## Долучитися
+
+Як допомогти проєкту — у [CONTRIBUTING](./CONTRIBUTING.md). Ліцензія — [MIT](./LICENSE).
 
 ## Стан проєкту
 

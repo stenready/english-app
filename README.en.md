@@ -61,7 +61,11 @@ feat(admin-panel): short description
 fix(backend-node-app): short description
 ```
 
-Type — only `feat` or `fix`. Scope — the part name: `admin-panel`, `client-app` or `backend-node-app`.
+Type — only `feat` or `fix`. Scope — the part name: `admin-panel`, `client-app`, `backend-node-app`, or `root` — for files in the root.
+
+## Contributing
+
+How to help the project — see [CONTRIBUTING](./CONTRIBUTING.en.md). License — [MIT](./LICENSE).
 
 ## Project status
 
