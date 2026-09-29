@@ -65,7 +65,7 @@ Type — only `feat` or `fix`. Scope — the part name: `admin-panel`, `client-a
 
 ## Contributing
 
-How to help the project — see [CONTRIBUTING](./CONTRIBUTING.en.md). License — [MIT](./LICENSE).
+How to help the project — see [CONTRIBUTING](./CONTRIBUTING.en.md). Discussion — in the [Telegram chat](https://t.me/stenreadyenglishapp). License — [MIT](./LICENSE).
 
 ## Project status
 

@@ -65,7 +65,7 @@ fix(backend-node-app): короткий опис
 
 ## Долучитися
 
-Як допомогти проєкту — у [CONTRIBUTING](./CONTRIBUTING.md). Ліцензія — [MIT](./LICENSE).
+Як допомогти проєкту — у [CONTRIBUTING](./CONTRIBUTING.md). Обговорення — у [Telegram-чаті](https://t.me/stenreadyenglishapp). Ліцензія — [MIT](./LICENSE).
 
 ## Стан проєкту
 

@@ -9,7 +9,7 @@
 ## З чого почати
 
 - **Задачі для старту** — issues з міткою [`good first issue`](https://github.com/stenready/english-app/labels/good%20first%20issue).
-- **Ідея чи питання** — створи issue або напиши в Telegram-чат.
+- **Ідея чи питання** — створи issue або напиши в [Telegram-чат](https://t.me/stenreadyenglishapp).
 - **Ревʼю коду** — коментарі до будь-якого коміту чи pull request'а теж дуже допомагають.
 
 ## Запуск

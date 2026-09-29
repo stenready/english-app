@@ -9,7 +9,7 @@ Thanks for wanting to help! The project is a learning one and open — any contr
 ## Where to start
 
 - **Starter tasks** — issues labeled [`good first issue`](https://github.com/stenready/english-app/labels/good%20first%20issue).
-- **An idea or a question** — open an issue or write in the Telegram chat.
+- **An idea or a question** — open an issue or write in the [Telegram chat](https://t.me/stenreadyenglishapp).
 - **Code review** — comments on any commit or pull request help a lot too.
 
 ## Running the project
