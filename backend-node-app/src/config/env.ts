@@ -25,7 +25,15 @@ if (publicUrl) {
   }
 }
 
-export const env = {
+interface Env {
+  corsOrigin: string
+  host: string
+  nodeEnv: string
+  port: number
+  publicUrl: string | undefined
+}
+
+export const env: Env = {
   corsOrigin: process.env.CORS_ORIGIN ?? DEFAULT_CORS_ORIGIN,
   host,
   nodeEnv: process.env.NODE_ENV ?? DEFAULT_NODE_ENV,

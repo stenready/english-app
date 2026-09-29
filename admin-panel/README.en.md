@@ -4,7 +4,7 @@
 
 [Українська](./README.md) | **English**
 
-Admin panel for an English-learning app.
+Web panel for an English-learning app. One for everyone: users add words and texts here, administrators manage the app. Sections are shown according to the role (the routes' `meta.permissions`).
 
 **Stack:** Vue 3 · TypeScript · Vite · Pinia · Vue Router · vue-i18n · Tailwind CSS 4 · ofetch
 
@@ -27,7 +27,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Requires a running `server-app` — the API URL is set in `.env` (`VITE_API_BASE_URL`).
+Requires a running `backend-node-app` — the API URL is set in `.env` (`VITE_API_BASE_URL`).
 
 ## Scripts
 

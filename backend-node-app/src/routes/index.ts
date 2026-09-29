@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { healthRouter } from './health/index.js'
-import { userRouter } from './user/index.js'
+import { healthRouter } from '#routes/health/index'
+import { userRouter } from '#routes/user/index'
 
 export const apiRouter = Router()
 

@@ -1,7 +1,7 @@
 import { app } from '#app'
 import { env } from '#config/env'
 
-const SHUTDOWN_SIGNALS = ['SIGINT', 'SIGTERM']
+const SHUTDOWN_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM']
 const SHUTDOWN_TIMEOUT_MS = 5000
 const listeningAddress = env.publicUrl ?? `port ${env.port}`
 
@@ -9,7 +9,7 @@ const server = app.listen(env.port, env.host, () => {
   console.info(`API is listening on ${listeningAddress} in ${env.nodeEnv} mode.`)
 })
 
-const shutdown = (signal) => {
+const shutdown = (signal: NodeJS.Signals): void => {
   console.info(`${signal} received. Closing server.`)
 
   server.close(() => {
