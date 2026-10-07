@@ -1,5 +1,6 @@
 import { app } from '#app'
 import { env } from '#config/env'
+import { prisma } from '#db/client'
 
 const SHUTDOWN_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM']
 const SHUTDOWN_TIMEOUT_MS = 5000
@@ -13,7 +14,8 @@ const shutdown = (signal: NodeJS.Signals): void => {
   console.info(`${signal} received. Closing server.`)
 
   server.close(() => {
-    process.exit(0)
+    // Release DB connections before exiting
+    prisma.$disconnect().finally(() => process.exit(0))
   })
 
   // Рвём keep-alive сокеты, иначе server.close ждёт их таймаута

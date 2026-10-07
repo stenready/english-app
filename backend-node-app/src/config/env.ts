@@ -8,6 +8,7 @@ const DEFAULT_HOST = '0.0.0.0'
 const host = process.env.HOST ?? DEFAULT_HOST
 const port = Number(process.env.PORT ?? DEFAULT_PORT)
 const publicUrl = process.env.PUBLIC_URL
+const databaseUrl = process.env.DATABASE_URL
 
 if (!host) {
   throw new Error('HOST must not be empty.')
@@ -15,6 +16,10 @@ if (!host) {
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error('PORT must be a positive integer.')
+}
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL must be set.')
 }
 
 if (publicUrl) {
@@ -27,6 +32,7 @@ if (publicUrl) {
 
 interface Env {
   corsOrigin: string
+  databaseUrl: string
   host: string
   nodeEnv: string
   port: number
@@ -35,6 +41,7 @@ interface Env {
 
 export const env: Env = {
   corsOrigin: process.env.CORS_ORIGIN ?? DEFAULT_CORS_ORIGIN,
+  databaseUrl,
   host,
   nodeEnv: process.env.NODE_ENV ?? DEFAULT_NODE_ENV,
   port,

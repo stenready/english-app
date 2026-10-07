@@ -12,7 +12,7 @@ REST API на Node.js + Express, написаний на TypeScript. Один с
 - [Швидкий старт](#швидкий-старт)
 - [Структура](#структура)
 - [Аліаси імпортів](#аліаси-імпортів)
-- [База даних (планується)](#база-даних-планується)
+- [База даних](#база-даних)
 
 ---
 
@@ -32,22 +32,43 @@ REST API на Node.js + Express, написаний на TypeScript. Один с
 
 ## Швидкий старт
 
+Потрібні Node.js `^20.19 || ^22.12 || >=24` і Docker (Docker Desktop або OrbStack).
+
 ```bash
-npm install
+npm install            # також генерує Prisma Client
 cp .env.example .env
+npm run db:up          # PostgreSQL у Docker
+npm run db:migrate     # застосувати міграції
 npm run dev
 ```
 
-| Скрипт                            | Що робить                                                           |
-| --------------------------------- | ------------------------------------------------------------------- |
-| `npm run dev`                     | Dev-сервер з автоперезапуском (`tsx watch`), запускає `.ts` напряму |
-| `npm run build`                   | Компілює `src/` у `dist/` (`tsc`)                                   |
-| `npm run start`                   | Запускає зібраний сервер: `node dist/server.js` (спочатку `build`)  |
-| `npm run typecheck`               | Перевірка типів без збирання                                        |
-| `npm run lint` / `lint:fix`       | ESLint                                                              |
-| `npm run format` / `format:check` | Prettier                                                            |
+> **Перша міграція.** Якщо в `prisma/migrations/` ще порожньо, створи її: `npm run db:migrate -- --name init`. Згенерована папка з `migration.sql` комітиться в репозиторій.
+
+| Скрипт                              | Що робить                                                           |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| `npm run dev`                       | Dev-сервер з автоперезапуском (`tsx watch`), запускає `.ts` напряму |
+| `npm run build`                     | Компілює `src/` у `dist/` (`tsc`)                                   |
+| `npm run start`                     | Запускає зібраний сервер: `node dist/server.js` (спочатку `build`)  |
+| `npm run typecheck`                 | Перевірка типів без збирання                                        |
+| `npm run db:up` / `db:down`         | Запустити / зупинити PostgreSQL у Docker                            |
+| `npm run db:migrate`                | Створити й застосувати міграцію за змінами в `schema.prisma` (dev)  |
+| `npm run db:deploy`                 | Застосувати наявні міграції (прод, CI)                              |
+| `npm run db:generate`               | Згенерувати Prisma Client (автоматично після `npm install`)         |
+| `npm run db:studio`                 | Prisma Studio — перегляд і редагування даних у браузері             |
+| `npm run docker:up` / `docker:down` | Усе в Docker, як у продакшені: PostgreSQL + міграції + API          |
+| `npm run lint` / `lint:fix`         | ESLint                                                              |
+| `npm run format` / `format:check`   | Prettier                                                            |
 
 Перевірка: `GET /api/v1/health`
+
+### Docker
+
+| Режим           | Команда                         | Що запускається                                                            |
+| --------------- | ------------------------------- | -------------------------------------------------------------------------- |
+| Розробка        | `npm run db:up` + `npm run dev` | PostgreSQL у Docker, API локально з автоперезапуском                       |
+| Як у продакшені | `npm run docker:up`             | PostgreSQL → `migrate` (`prisma migrate deploy`) → API з production-образу |
+
+`Dockerfile` — багатоетапна збірка: `deps` (усі залежності + Prisma CLI) → `build` (`tsc`) → `runtime` (лише production-залежності й `dist/`, від користувача `node`, з `HEALTHCHECK`). Паролі в `docker-compose.yml` — лише для локальної розробки; у продакшені їх задають змінними оточення.
 
 ---
 
@@ -58,9 +79,11 @@ src/
 ├── config/          Конфігурація з env
 ├── constants/       Константи (HTTP-статуси…)
 ├── controllers/     Обробка HTTP-запиту й відповіді
+├── db/              Prisma Client (один на застосунок)
 ├── errors/          AppError
+├── generated/       Згенерований Prisma Client (не в git)
 ├── middlewares/     Middleware Express
-├── repositories/    Доступ до даних (зараз — у пам'яті, далі — PostgreSQL)
+├── repositories/    Доступ до даних через Prisma
 ├── routes/          Маршрути
 ├── services/        Бізнес-логіка та валідація
 ├── types/           Доменні типи (User…)
@@ -96,9 +119,13 @@ src/
 
 ---
 
-## База даних (планується)
+## База даних
 
-**PostgreSQL** у класичному реляційному стилі: нормалізовані таблиці, зовнішні ключі, зв'язки «багато-до-багатьох» — через **таблиці-мости** (junction tables).
+**PostgreSQL 18** у класичному реляційному стилі: нормалізовані таблиці, зовнішні ключі, зв'язки «багато-до-багатьох» — через **таблиці-мости** (junction tables).
+
+**Prisma 7:** схема — `prisma/schema.prisma`, міграції — `prisma/migrations/` (Prisma Migrate), підключення — через `@prisma/adapter-pg`, URL — у `prisma.config.ts` з `DATABASE_URL`. Імена в базі — `snake_case` через `@map` / `@@map`, у коді — `camelCase`.
+
+**Зараз у базі:** `users` (`id`, `email`, `name`, `role`, `created_at`, `updated_at`). Решта таблиць нижче — план.
 
 ### Угоди
 
@@ -145,6 +172,4 @@ progress         user_id → users, lesson_id, word_id, correct, attempts, compl
 
 ### Ще не вирішено
 
-- ORM / query builder (Prisma, TypeORM, Kysely, чистий SQL).
-- Інструмент міграцій.
 - Набір часів у модулі: однаковий для всіх чи свій для кожного.

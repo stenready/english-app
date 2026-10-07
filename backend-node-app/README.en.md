@@ -12,7 +12,7 @@ REST API on Node.js + Express, written in TypeScript. One server serves both fro
 - [Quick start](#quick-start)
 - [Structure](#structure)
 - [Import aliases](#import-aliases)
-- [Database (planned)](#database-planned)
+- [Database](#database)
 
 ---
 
@@ -32,22 +32,43 @@ REST API on Node.js + Express, written in TypeScript. One server serves both fro
 
 ## Quick start
 
+Requires Node.js `^20.19 || ^22.12 || >=24` and Docker (Docker Desktop or OrbStack).
+
 ```bash
-npm install
+npm install            # also generates Prisma Client
 cp .env.example .env
+npm run db:up          # PostgreSQL in Docker
+npm run db:migrate     # apply migrations
 npm run dev
 ```
 
-| Script                            | What it does                                                        |
-| --------------------------------- | ------------------------------------------------------------------- |
-| `npm run dev`                     | Dev server with hot reload (`tsx watch`), runs `.ts` directly       |
-| `npm run build`                   | Compiles `src/` to `dist/` (`tsc`)                                  |
-| `npm run start`                   | Runs the compiled server: `node dist/server.js` (run `build` first) |
-| `npm run typecheck`               | Type check without emitting files                                   |
-| `npm run lint` / `lint:fix`       | ESLint                                                              |
-| `npm run format` / `format:check` | Prettier                                                            |
+> **First migration.** If `prisma/migrations/` is still empty, create it: `npm run db:migrate -- --name init`. The generated folder with `migration.sql` is committed to the repository.
+
+| Script                              | What it does                                                         |
+| ----------------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`                       | Dev server with hot reload (`tsx watch`), runs `.ts` directly        |
+| `npm run build`                     | Compiles `src/` to `dist/` (`tsc`)                                   |
+| `npm run start`                     | Runs the compiled server: `node dist/server.js` (run `build` first)  |
+| `npm run typecheck`                 | Type check without emitting files                                    |
+| `npm run db:up` / `db:down`         | Start / stop PostgreSQL in Docker                                    |
+| `npm run db:migrate`                | Create and apply a migration from `schema.prisma` changes (dev)      |
+| `npm run db:deploy`                 | Apply existing migrations (production, CI)                           |
+| `npm run db:generate`               | Generate Prisma Client (runs automatically after `npm install`)      |
+| `npm run db:studio`                 | Prisma Studio — browse and edit data in the browser                  |
+| `npm run docker:up` / `docker:down` | Everything in Docker, production-like: PostgreSQL + migrations + API |
+| `npm run lint` / `lint:fix`         | ESLint                                                               |
+| `npm run format` / `format:check`   | Prettier                                                             |
 
 Health check: `GET /api/v1/health`
+
+### Docker
+
+| Mode            | Command                         | What runs                                                                        |
+| --------------- | ------------------------------- | -------------------------------------------------------------------------------- |
+| Development     | `npm run db:up` + `npm run dev` | PostgreSQL in Docker, API locally with hot reload                                |
+| Production-like | `npm run docker:up`             | PostgreSQL → `migrate` (`prisma migrate deploy`) → API from the production image |
+
+`Dockerfile` is a multi-stage build: `deps` (all dependencies + Prisma CLI) → `build` (`tsc`) → `runtime` (production dependencies and `dist/` only, runs as the `node` user, with a `HEALTHCHECK`). Passwords in `docker-compose.yml` are for local development only; in production they come from environment variables.
 
 ---
 
@@ -58,9 +79,11 @@ src/
 ├── config/          Environment configuration
 ├── constants/       Constants (HTTP statuses…)
 ├── controllers/     HTTP request and response handling
+├── db/              Prisma Client (one per app)
 ├── errors/          AppError
+├── generated/       Generated Prisma Client (not in git)
 ├── middlewares/     Express middleware
-├── repositories/    Data access (in memory for now, PostgreSQL next)
+├── repositories/    Data access via Prisma
 ├── routes/          Route definitions
 ├── services/        Business logic and validation
 ├── types/           Domain types (User…)
@@ -96,9 +119,13 @@ A new top-level folder in `src/` needs a new alias with both targets.
 
 ---
 
-## Database (planned)
+## Database
 
-**PostgreSQL** in the classic relational style: normalized tables, foreign keys, many-to-many relations via **junction tables**.
+**PostgreSQL 18** in the classic relational style: normalized tables, foreign keys, many-to-many relations via **junction tables**.
+
+**Prisma 7:** schema — `prisma/schema.prisma`, migrations — `prisma/migrations/` (Prisma Migrate), connection — via `@prisma/adapter-pg`, URL — in `prisma.config.ts` from `DATABASE_URL`. Database names are `snake_case` via `@map` / `@@map`, code uses `camelCase`.
+
+**In the database now:** `users` (`id`, `email`, `name`, `role`, `created_at`, `updated_at`). The other tables below are the plan.
 
 ### Conventions
 
@@ -145,6 +172,4 @@ progress         user_id → users, lesson_id, word_id, correct, attempts, compl
 
 ### Not decided yet
 
-- ORM / query builder (Prisma, TypeORM, Kysely, plain SQL).
-- Migration tool.
 - The set of tenses in a module: the same for all or per module.

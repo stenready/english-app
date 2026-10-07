@@ -5,6 +5,8 @@ import type { User, UserInput } from '#types/user'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const NAME_MIN_LENGTH = 2
+// ids are Postgres uuid: a malformed id can't exist, and would make the query itself fail
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 interface ValidationIssue {
   field: keyof UserInput
@@ -38,18 +40,18 @@ const assertValid = (payload: unknown): UserInput => {
   return { email: normalizedEmail, name: normalizedName }
 }
 
-const assertEmailIsFree = (email: string, currentUserId?: string): void => {
-  const owner = userRepository.findByEmail(email)
+const assertEmailIsFree = async (email: string, currentUserId?: string): Promise<void> => {
+  const owner = await userRepository.findByEmail(email)
 
   if (owner && owner.id !== currentUserId) {
     throw new AppError(HTTP_STATUS.CONFLICT, 'Email is already taken.')
   }
 }
 
-const getUsers = (): User[] => userRepository.findAll()
+const getUsers = (): Promise<User[]> => userRepository.findAll()
 
-const getUser = (id: string): User => {
-  const user = userRepository.findById(id)
+const getUser = async (id: string): Promise<User> => {
+  const user = UUID_PATTERN.test(id) ? await userRepository.findById(id) : null
 
   if (!user) {
     throw new AppError(HTTP_STATUS.NOT_FOUND, `User ${id} was not found.`)
@@ -58,32 +60,31 @@ const getUser = (id: string): User => {
   return user
 }
 
-const createUser = (payload: unknown): User => {
+const createUser = async (payload: unknown): Promise<User> => {
   const data = assertValid(payload)
 
-  assertEmailIsFree(data.email)
+  await assertEmailIsFree(data.email)
 
   return userRepository.create(data)
 }
 
-const updateUser = (id: string, payload: unknown): User => {
-  const user = getUser(id)
+const updateUser = async (id: string, payload: unknown): Promise<User> => {
+  const user = await getUser(id)
   const changes = isRecord(payload) ? payload : {}
   const data = assertValid({
     email: changes.email ?? user.email,
     name: changes.name ?? user.name,
   })
 
-  assertEmailIsFree(data.email, id)
+  await assertEmailIsFree(data.email, id)
 
-  // getUser above guarantees the user exists
-  return userRepository.update(id, data) as User
+  return userRepository.update(id, data)
 }
 
-const deleteUser = (id: string): void => {
-  getUser(id)
+const deleteUser = async (id: string): Promise<void> => {
+  await getUser(id)
 
-  userRepository.remove(id)
+  await userRepository.remove(id)
 }
 
 export default { createUser, deleteUser, getUser, getUsers, updateUser }

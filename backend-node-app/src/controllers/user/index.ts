@@ -6,26 +6,26 @@ interface UserParams {
   id: string
 }
 
-const getUsers: RequestHandler = (_request, response) => {
-  response.status(HTTP_STATUS.OK).json({ data: userService.getUsers() })
+const getUsers: RequestHandler = async (_request, response) => {
+  response.status(HTTP_STATUS.OK).json({ data: await userService.getUsers() })
 }
 
-const getUser: RequestHandler<UserParams> = (request, response) => {
-  response.status(HTTP_STATUS.OK).json({ data: userService.getUser(request.params.id) })
+const getUser: RequestHandler<UserParams> = async (request, response) => {
+  response.status(HTTP_STATUS.OK).json({ data: await userService.getUser(request.params.id) })
 }
 
-const createUser: RequestHandler = (request, response) => {
-  response.status(HTTP_STATUS.CREATED).json({ data: userService.createUser(request.body) })
+const createUser: RequestHandler = async (request, response) => {
+  response.status(HTTP_STATUS.CREATED).json({ data: await userService.createUser(request.body) })
 }
 
-const updateUser: RequestHandler<UserParams> = (request, response) => {
-  const user = userService.updateUser(request.params.id, request.body)
+const updateUser: RequestHandler<UserParams> = async (request, response) => {
+  const user = await userService.updateUser(request.params.id, request.body)
 
   response.status(HTTP_STATUS.OK).json({ data: user })
 }
 
-const deleteUser: RequestHandler<UserParams> = (request, response) => {
-  userService.deleteUser(request.params.id)
+const deleteUser: RequestHandler<UserParams> = async (request, response) => {
+  await userService.deleteUser(request.params.id)
 
   response.status(HTTP_STATUS.NO_CONTENT).end()
 }

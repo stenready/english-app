@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": "^20.19 || ^22.12 || >=24.0"
   },
   "imports": {
     "#app": {
@@ -23,9 +23,17 @@
       "development": "./src/controllers/*/index.ts",
       "default": "./dist/controllers/*/index.js"
     },
+    "#db/*": {
+      "development": "./src/db/*.ts",
+      "default": "./dist/db/*.js"
+    },
     "#errors/*": {
       "development": "./src/errors/*.ts",
       "default": "./dist/errors/*.js"
+    },
+    "#generated/*": {
+      "development": "./src/generated/*.ts",
+      "default": "./dist/generated/*.js"
     },
     "#middlewares/*": {
       "development": "./src/middlewares/*.ts",
@@ -48,17 +56,48 @@
       "default": "./dist/types/*.js"
     }
   },
+  "//": [
+    "Описание команд (npm run <команда>). npm игнорирует это поле.",
+    "dev           — запуск API в режиме разработки с автоперезапуском при изменениях (http://localhost:3000)",
+    "build         — компиляция TypeScript в dist/",
+    "start         — запуск собранного API из dist/ (сначала build)",
+    "typecheck     — проверка типов TypeScript без сборки",
+    "db:up         — поднять только PostgreSQL в Docker (в фоне)",
+    "db:down       — остановить и удалить контейнеры (данные БД сохраняются)",
+    "db:generate   — сгенерировать Prisma Client по schema.prisma",
+    "db:migrate    — создать и применить миграции (для разработки)",
+    "db:deploy     — применить существующие миграции (для прода)",
+    "db:studio     — Prisma Studio: просмотр/редактирование данных БД в браузере (http://localhost:5555)",
+    "lint          — проверка кода ESLint",
+    "lint:fix      — ESLint с автоисправлением",
+    "format        — отформатировать весь код Prettier",
+    "format:check  — проверить форматирование без изменений",
+    "postinstall   — запускается сам после npm install: генерирует Prisma Client",
+    "docker:up     — весь бэкенд в Docker: PostgreSQL + миграции + API (со сборкой образа)",
+    "docker:down   — остановить весь бэкенд в Docker"
+  ],
   "scripts": {
     "dev": "tsx watch --conditions=development src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "postinstall": "prisma generate",
+    "docker:up": "docker compose --profile app up --build",
+    "docker:down": "docker compose --profile app down"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -76,6 +115,7 @@
     "globals": "^17.12.0",
     "jiti": "^2.7.0",
     "prettier": "^3.9.9",
+    "prisma": "7.10.0",
     "tsx": "^4.23.15",
     "typescript": "~5.9",
     "typescript-eslint": "^8.71.0"

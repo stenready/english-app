@@ -1,0 +1,59 @@
+name: english-app
+
+# Local development: `docker compose up -d` starts only PostgreSQL (run the API with `npm run dev`).
+# Production-like stack: `docker compose --profile app up --build` — PostgreSQL + migrations + API.
+# Credentials below are for local development only.
+
+x-database-url: &database-url postgresql://${POSTGRES_USER:-english}:${POSTGRES_PASSWORD:-english}@postgres:5432/${POSTGRES_DB:-english_app}
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-english}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-english}
+      POSTGRES_DB: ${POSTGRES_DB:-english_app}
+    ports:
+      - '5432:5432'
+    volumes:
+      # Postgres 18 images keep data in a versioned subfolder of /var/lib/postgresql
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    profiles: [app]
+    build:
+      context: .
+      target: deps
+    command: ['npx', 'prisma', 'migrate', 'deploy']
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    profiles: [app]
+    build:
+      context: .
+      target: runtime
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173,http://localhost:5174}
+      DATABASE_URL: *database-url
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
