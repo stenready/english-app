@@ -24,5 +24,7 @@
   "validation.email": "Поле «{field}» має містити коректний email",
   "validation.minLength": "Поле «{field}» закоротке (мінімум {min})",
   "validation.maxLength": "Поле «{field}» задовге (максимум {max})",
-  "validation.sameAs": "Поле «{field}» не збігається"
+  "validation.sameAs": "Поле «{field}» не збігається",
+  "users.list.searchButton": "Знайти",
+  "users.list.addUser": "Додати користувача"
 }

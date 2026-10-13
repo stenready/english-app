@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import AppCard from '@/components/app/AppCard.vue'
 import routeNames from '@/constants/routeNames'
 
 const PAGE_NAME = 'NotFoundMainPage'
@@ -11,14 +12,17 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <main :data-page-name="PAGE_NAME" class="mx-auto max-w-5xl px-6 py-16">
-    <h1 class="text-3xl font-bold">{{ t('notFound.title') }}</h1>
-    <p class="mt-4">{{ t('notFound.description') }}</p>
-    <RouterLink
-      :to="{ name: routeNames.HOME }"
-      class="mt-6 inline-block underline"
+  <main :data-page-name="PAGE_NAME">
+    <AppCard
+      :title="t('notFound.title')"
+      :description="t('notFound.description')"
     >
-      {{ t('notFound.backHome') }}
-    </RouterLink>
+      <RouterLink
+        :to="{ name: routeNames.HOME }"
+        class="inline-block underline"
+      >
+        {{ t('notFound.backHome') }}
+      </RouterLink>
+    </AppCard>
   </main>
 </template>

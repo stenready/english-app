@@ -85,11 +85,15 @@ Example: a `danger` color.
 
 In `main.scss` — a short name **without** a prefix. In `tailwind.css` — the same name **with** a Tailwind namespace prefix.
 
-| `main.scss`           | `tailwind.css`                       | Classes                                                     |
-| --------------------- | ------------------------------------ | ----------------------------------------------------------- |
-| `--danger`            | `--color-danger: var(--danger)`      | `bg-danger`, `text-danger`, `border-danger`, `ring-danger`… |
-| `--card` (radius)     | `--radius-card: var(--card)`         | `rounded-card`                                              |
-| `--elevated` (shadow) | `--shadow-elevated: var(--elevated)` | `shadow-elevated`                                           |
+| `main.scss`            | `tailwind.css`                       | Classes                                                     |
+| ---------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| `--danger`             | `--color-danger: var(--danger)`      | `bg-danger`, `text-danger`, `border-danger`, `ring-danger`… |
+| `--info`               | `bg-info`, `text-info`               | Info accent (`info` button)                                 |
+| `--info-foreground`    | `text-info-foreground`               | Text on `info`                                              |
+| `--warning`            | `bg-warning`, `text-warning`         | Warning (`warning` button)                                  |
+| `--warning-foreground` | `text-warning-foreground`            | Text on `warning`                                           |
+| `--card` (radius)      | `--radius-card: var(--card)`         | `rounded-card`                                              |
+| `--elevated` (shadow)  | `--shadow-elevated: var(--elevated)` | `shadow-elevated`                                           |
 
 The prefix decides which classes Tailwind generates: `--color-*` → colors, `--radius-*` → `rounded-*`, `--shadow-*` → `shadow-*`, `--font-*` → `font-*`.
 

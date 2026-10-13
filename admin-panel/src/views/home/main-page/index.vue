@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import AppCard from '@/components/app/AppCard.vue'
 
 const PAGE_NAME = 'HomeMainPage'
 
@@ -9,7 +10,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <main :data-page-name="PAGE_NAME" class="mx-auto max-w-5xl px-6 py-16">
-    <h1 class="text-3xl font-bold">{{ t('home.title') }}</h1>
+  <main :data-page-name="PAGE_NAME">
+    <AppCard :title="t('home.title')" />
   </main>
 </template>

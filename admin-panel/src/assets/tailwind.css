@@ -15,6 +15,10 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-canvas: var(--canvas);
   --color-nav-hover: var(--nav-hover);
   --color-nav-active: var(--nav-active);

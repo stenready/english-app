@@ -49,7 +49,7 @@ const { t } = useI18n()
       </aside>
 
       <div
-        class="mr-2 mb-2 min-w-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background shadow-sm"
+        class="mr-4 mb-2 min-w-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background shadow-sm"
       >
         <slot />
       </div>

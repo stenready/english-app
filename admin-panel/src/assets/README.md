@@ -85,11 +85,15 @@ import './assets/main.scss'
 
 У `main.scss` — коротка назва **без** префікса. У `tailwind.css` — та сама назва **з** префіксом простору імен Tailwind.
 
-| `main.scss`         | `tailwind.css`                       | Класи                                                       |
-| ------------------- | ------------------------------------ | ----------------------------------------------------------- |
-| `--danger`          | `--color-danger: var(--danger)`      | `bg-danger`, `text-danger`, `border-danger`, `ring-danger`… |
-| `--card` (радіус)   | `--radius-card: var(--card)`         | `rounded-card`                                              |
-| `--elevated` (тінь) | `--shadow-elevated: var(--elevated)` | `shadow-elevated`                                           |
+| `main.scss`            | `tailwind.css`                       | Класи                                                       |
+| ---------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| `--danger`             | `--color-danger: var(--danger)`      | `bg-danger`, `text-danger`, `border-danger`, `ring-danger`… |
+| `--info`               | `bg-info`, `text-info`               | Інформаційний акцент (кнопка `info`)                        |
+| `--info-foreground`    | `text-info-foreground`               | Текст на `info`                                             |
+| `--warning`            | `bg-warning`, `text-warning`         | Попередження (кнопка `warning`)                             |
+| `--warning-foreground` | `text-warning-foreground`            | Текст на `warning`                                          |
+| `--card` (радіус)      | `--radius-card: var(--card)`         | `rounded-card`                                              |
+| `--elevated` (тінь)    | `--shadow-elevated: var(--elevated)` | `shadow-elevated`                                           |
 
 Префікс визначає, які класи згенерує Tailwind: `--color-*` → кольори, `--radius-*` → `rounded-*`, `--shadow-*` → `shadow-*`, `--font-*` → `font-*`.
 
