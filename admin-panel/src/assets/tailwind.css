@@ -14,4 +14,14 @@
   --color-muted: var(--muted);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-danger: var(--danger);
+  --color-canvas: var(--canvas);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-active: var(--nav-active);
+  --color-nav-indicator: var(--nav-indicator);
+}
+
+/* A gradient is an image, not a color: no @theme namespace generates it */
+@utility bg-canvas-gradient {
+  background-image: var(--canvas-gradient);
 }

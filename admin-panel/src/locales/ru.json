@@ -7,5 +7,22 @@
   "about.title": "О проекте",
   "notFound.title": "Страница не найдена",
   "notFound.description": "Такой страницы не существует.",
-  "notFound.backHome": "На главную"
+  "notFound.backHome": "На главную",
+  "navigation.users": "Пользователи",
+  "layout.appName": "Админ-панель",
+  "users.list.title": "Пользователи",
+  "users.list.subtitle": "Управление пользователями приложения",
+  "users.list.searchPlaceholder": "Поиск по имени или email",
+  "users.list.count": "Пользователи ({count})",
+  "users.list.columnMember": "Пользователь",
+  "users.list.columnJoined": "Добавлен",
+  "users.list.loading": "Загрузка…",
+  "users.list.loadError": "Не удалось загрузить пользователей",
+  "users.list.empty": "Пользователи не найдены",
+  "common.clear": "Очистить",
+  "validation.required": "Поле «{field}» обязательно",
+  "validation.email": "Поле «{field}» должно содержать корректный email",
+  "validation.minLength": "Поле «{field}» слишком короткое (минимум {min})",
+  "validation.maxLength": "Поле «{field}» слишком длинное (максимум {max})",
+  "validation.sameAs": "Поле «{field}» не совпадает"
 }

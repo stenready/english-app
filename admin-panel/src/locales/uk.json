@@ -7,5 +7,22 @@
   "about.title": "Про проєкт",
   "notFound.title": "Сторінку не знайдено",
   "notFound.description": "Такої сторінки не існує.",
-  "notFound.backHome": "На головну"
+  "notFound.backHome": "На головну",
+  "navigation.users": "Користувачі",
+  "layout.appName": "Адмін-панель",
+  "users.list.title": "Користувачі",
+  "users.list.subtitle": "Керування користувачами застосунку",
+  "users.list.searchPlaceholder": "Пошук за ім'ям або email",
+  "users.list.count": "Користувачі ({count})",
+  "users.list.columnMember": "Користувач",
+  "users.list.columnJoined": "Додано",
+  "users.list.loading": "Завантаження…",
+  "users.list.loadError": "Не вдалося завантажити користувачів",
+  "users.list.empty": "Користувачів не знайдено",
+  "common.clear": "Очистити",
+  "validation.required": "Поле «{field}» обов'язкове",
+  "validation.email": "Поле «{field}» має містити коректний email",
+  "validation.minLength": "Поле «{field}» закоротке (мінімум {min})",
+  "validation.maxLength": "Поле «{field}» задовге (максимум {max})",
+  "validation.sameAs": "Поле «{field}» не збігається"
 }

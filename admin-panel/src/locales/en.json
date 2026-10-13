@@ -7,5 +7,22 @@
   "about.title": "About",
   "notFound.title": "Page not found",
   "notFound.description": "The page you are looking for does not exist.",
-  "notFound.backHome": "Back to home"
+  "notFound.backHome": "Back to home",
+  "navigation.users": "Users",
+  "layout.appName": "Admin Panel",
+  "users.list.title": "Users",
+  "users.list.subtitle": "Manage the application's users",
+  "users.list.searchPlaceholder": "Search by name or email",
+  "users.list.count": "Users ({count})",
+  "users.list.columnMember": "User",
+  "users.list.columnJoined": "Joined",
+  "users.list.loading": "Loading…",
+  "users.list.loadError": "Failed to load users",
+  "users.list.empty": "No users found",
+  "common.clear": "Clear",
+  "validation.required": "The {field} field is required",
+  "validation.email": "The {field} field must be a valid email",
+  "validation.minLength": "The {field} field is too short (minimum {min})",
+  "validation.maxLength": "The {field} field is too long (maximum {max})",
+  "validation.sameAs": "The {field} field does not match"
 }

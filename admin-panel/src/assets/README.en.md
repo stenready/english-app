@@ -99,16 +99,22 @@ The prefix decides which classes Tailwind generates: `--color-*` → colors, `--
 
 ## Current variables
 
-| Variable               | Tailwind                     | Used for                 |
-| ---------------------- | ---------------------------- | ------------------------ |
-| `--background`         | `bg-background`              | Page background          |
-| `--foreground`         | `text-foreground`            | Main text                |
-| `--surface`            | `bg-surface`                 | Cards, panels background |
-| `--surface-foreground` | `text-surface-foreground`    | Text on `surface`        |
-| `--border`             | `border-border`              | Borders                  |
-| `--muted`              | `text-muted`                 | Secondary text           |
-| `--primary`            | `bg-primary`, `text-primary` | Main accent color        |
-| `--primary-foreground` | `text-primary-foreground`    | Text on `primary`        |
+| Variable               | Tailwind                       | Used for                                                                          |
+| ---------------------- | ------------------------------ | --------------------------------------------------------------------------------- |
+| `--background`         | `bg-background`                | Page background                                                                   |
+| `--foreground`         | `text-foreground`              | Main text                                                                         |
+| `--surface`            | `bg-surface`                   | Cards, panels background                                                          |
+| `--surface-foreground` | `text-surface-foreground`      | Text on `surface`                                                                 |
+| `--border`             | `border-border`                | Borders                                                                           |
+| `--muted`              | `text-muted`                   | Secondary text                                                                    |
+| `--primary`            | `bg-primary`, `text-primary`   | Main accent color                                                                 |
+| `--primary-foreground` | `text-primary-foreground`      | Text on `primary`                                                                 |
+| `--danger`             | `text-danger`, `border-danger` | Validation errors                                                                 |
+| `--canvas`             | `bg-canvas`                    | Background around the content panel                                               |
+| `--canvas-gradient`    | `bg-canvas-gradient`           | Gradient in the top-right corner of the background (via `@utility`, not `@theme`) |
+| `--nav-hover`          | `bg-nav-hover`                 | Menu item on hover                                                                |
+| `--nav-active`         | `bg-nav-active`                | Active menu item                                                                  |
+| `--nav-indicator`      | `bg-nav-indicator`             | Active menu item marker                                                           |
 
 ---
 

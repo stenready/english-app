@@ -1,21 +1,50 @@
+// Palette follows GitLab (Pajamas design system)
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --surface: #f8fafc;
-  --surface-foreground: #1e293b;
-  --border: #e2e8f0;
-  --muted: #64748b;
-  --primary: #2563eb;
+  --foreground: #3a383f;
+  --surface: #fbfafd;
+  --surface-foreground: #3a383f;
+  --border: #dcdcde;
+  --muted: #626168;
+  --primary: #1f75cb;
   --primary-foreground: #ffffff;
+  --danger: #dd2b0e;
+  --canvas: #eeebf2;
+  --canvas-gradient: radial-gradient(
+    ellipse 260px 620px at 100% 0,
+    #eee5ee 0%,
+    #d4cde5 21%,
+    #e8d0e3 42%,
+    #ecccd7 63%,
+    #eedbdb 84%,
+    transparent 100%
+  );
+  --nav-hover: #e6e2eb;
+  --nav-active: #e0dae5;
+  --nav-indicator: #535158;
 }
 
 [data-theme="dark"] {
-  --background: #0a0a0a;
-  --foreground: #f8fafc;
-  --surface: #171717;
-  --surface-foreground: #e2e8f0;
-  --border: #334155;
-  --muted: #94a3b8;
-  --primary: #60a5fa;
-  --primary-foreground: #0a0a0a;
+  --background: #1f1e24;
+  --foreground: #ececef;
+  --surface: #28272d;
+  --surface-foreground: #ececef;
+  --border: #3a383f;
+  --muted: #a4a3a8;
+  --primary: #428fdc;
+  --primary-foreground: #18171d;
+  --danger: #ec5941;
+  --canvas: #18171d;
+  --canvas-gradient: radial-gradient(
+    ellipse 260px 620px at 100% 0,
+    #1d1a22 0%,
+    #2a2436 21%,
+    #33263a 42%,
+    #382630 63%,
+    #30262a 84%,
+    transparent 100%
+  );
+  --nav-hover: #2b2a30;
+  --nav-active: #333238;
+  --nav-indicator: #bfbfc3;
 }

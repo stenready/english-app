@@ -99,16 +99,22 @@ import './assets/main.scss'
 
 ## Поточні змінні
 
-| Змінна                 | Tailwind                     | Для чого                 |
-| ---------------------- | ---------------------------- | ------------------------ |
-| `--background`         | `bg-background`              | Фон сторінки             |
-| `--foreground`         | `text-foreground`            | Основний текст           |
-| `--surface`            | `bg-surface`                 | Фон карток, панелей      |
-| `--surface-foreground` | `text-surface-foreground`    | Текст на `surface`       |
-| `--border`             | `border-border`              | Межі                     |
-| `--muted`              | `text-muted`                 | Другорядний текст        |
-| `--primary`            | `bg-primary`, `text-primary` | Основний акцентний колір |
-| `--primary-foreground` | `text-primary-foreground`    | Текст на `primary`       |
+| Змінна                 | Tailwind                       | Для чого                                                               |
+| ---------------------- | ------------------------------ | ---------------------------------------------------------------------- |
+| `--background`         | `bg-background`                | Фон сторінки                                                           |
+| `--foreground`         | `text-foreground`              | Основний текст                                                         |
+| `--surface`            | `bg-surface`                   | Фон карток, панелей                                                    |
+| `--surface-foreground` | `text-surface-foreground`      | Текст на `surface`                                                     |
+| `--border`             | `border-border`                | Межі                                                                   |
+| `--muted`              | `text-muted`                   | Другорядний текст                                                      |
+| `--primary`            | `bg-primary`, `text-primary`   | Основний акцентний колір                                               |
+| `--primary-foreground` | `text-primary-foreground`      | Текст на `primary`                                                     |
+| `--danger`             | `text-danger`, `border-danger` | Помилки валідації                                                      |
+| `--canvas`             | `bg-canvas`                    | Фон навколо панелі контенту                                            |
+| `--canvas-gradient`    | `bg-canvas-gradient`           | Градієнт у правому верхньому куті фону (через `@utility`, не `@theme`) |
+| `--nav-hover`          | `bg-nav-hover`                 | Пункт меню при наведенні                                               |
+| `--nav-active`         | `bg-nav-active`                | Активний пункт меню                                                    |
+| `--nav-indicator`      | `bg-nav-indicator`             | Смужка активного пункту                                                |
 
 ---
 

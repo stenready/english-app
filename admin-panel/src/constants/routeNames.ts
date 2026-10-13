@@ -1,6 +1,7 @@
 const routeNames = {
   HOME: 'HOME',
   ABOUT: 'ABOUT',
+  USERS: 'USERS',
   NOT_FOUND: 'NOT_FOUND',
 } as const
 
