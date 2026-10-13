@@ -51,7 +51,7 @@ npm run dev
 | `npm run start`                     | Runs the compiled server: `node dist/server.js` (run `build` first)  |
 | `npm run typecheck`                 | Type check without emitting files                                    |
 | `npm run db:up` / `db:down`         | Start / stop PostgreSQL in Docker                                    |
-| `npm run db:migrate`                | Create and apply a migration from `schema.prisma` changes (dev)      |
+| `npm run db:migrate`                | Create and apply a migration from `prisma/schema/` changes (dev)      |
 | `npm run db:deploy`                 | Apply existing migrations (production, CI)                           |
 | `npm run db:generate`               | Generate Prisma Client (runs automatically after `npm install`)      |
 | `npm run db:studio`                 | Prisma Studio — browse and edit data in the browser                  |
@@ -123,7 +123,7 @@ A new top-level folder in `src/` needs a new alias with both targets.
 
 **PostgreSQL 18** in the classic relational style: normalized tables, foreign keys, many-to-many relations via **junction tables**.
 
-**Prisma 7:** schema — `prisma/schema.prisma`, migrations — `prisma/migrations/` (Prisma Migrate), connection — via `@prisma/adapter-pg`, URL — in `prisma.config.ts` from `DATABASE_URL`. Database names are `snake_case` via `@map` / `@@map`, code uses `camelCase`.
+**Prisma 7:** schema — `prisma/schema/` (multi-file: `schema.prisma` holds generator and datasource, models go one file per module, e.g. `user.prisma`), migrations — `prisma/migrations/` (Prisma Migrate), connection — via `@prisma/adapter-pg`, URL — in `prisma.config.ts` from `DATABASE_URL`. Database names are `snake_case` via `@map` / `@@map`, code uses `camelCase`.
 
 **In the database now:** `users` (`id`, `email`, `name`, `role`, `created_at`, `updated_at`). The other tables below are the plan.
 

@@ -64,7 +64,7 @@
     "typecheck     — проверка типов TypeScript без сборки",
     "db:up         — поднять только PostgreSQL в Docker (в фоне)",
     "db:down       — остановить и удалить контейнеры (данные БД сохраняются)",
-    "db:generate   — сгенерировать Prisma Client по schema.prisma",
+    "db:generate   — сгенерировать Prisma Client по prisma/schema/",
     "db:migrate    — создать и применить миграции (для разработки)",
     "db:deploy     — применить существующие миграции (для прода)",
     "db:studio     — Prisma Studio: просмотр/редактирование данных БД в браузере (http://localhost:5555)",

@@ -1,0 +1,13 @@
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String
+  // Optional for now: existing users have no role yet
+  roleId    String?  @map("role_id") @db.Uuid
+  role      Role?    @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([roleId])
+  @@map("users")
+}

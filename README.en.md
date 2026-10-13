@@ -6,11 +6,11 @@ An English-learning app: a mobile app for learning and a web panel where it's co
 
 The web panel is one for everyone: both users and administrators. The only difference is roles — everyone sees the sections their permissions allow.
 
-| Part                                    | What it is                                 | Stack                                              | Docs                                                                                           |
-| --------------------------------------- | ------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [`admin-panel/`](./admin-panel)         | Web panel for users and administrators     | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4 | [README](./admin-panel/README.en.md) · [Architecture decisions](./admin-panel/DECISIONS.en.md) |
-| [`client-app/`](./client-app)           | Learning app: website + mobile (Capacitor) | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4 | [README](./client-app/README.en.md)                                                            |
-| [`backend-node-app/`](backend-node-app) | REST API                                   | Node.js · TypeScript · Express                     | [README](backend-node-app/README.en.md)                                                        |
+| Part                                    | What it is                                 | Stack                                                | Docs                                                                                           |
+| --------------------------------------- | ------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`admin-panel/`](./admin-panel)         | Web panel for users and administrators     | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4   | [README](./admin-panel/README.en.md) · [Architecture decisions](./admin-panel/DECISIONS.en.md) |
+| [`client-app/`](./client-app)           | Learning app: website + mobile (Capacitor) | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4   | [README](./client-app/README.en.md)                                                            |
+| [`backend-node-app/`](backend-node-app) | REST API                                   | Node.js · TypeScript · Express · Prisma · PostgreSQL | [README](backend-node-app/README.en.md)                                                        |
 
 ## Quick start
 
@@ -22,6 +22,8 @@ The parts run separately, each in its own terminal.
 cd backend-node-app
 npm install
 cp .env.example .env
+npm run db:up        # PostgreSQL in Docker
+npm run db:migrate
 npm run dev
 ```
 

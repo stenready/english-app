@@ -6,11 +6,11 @@
 
 Веб-панель одна для всіх: і для користувачів, і для адміністраторів. Різниця лише в ролях — кожен бачить розділи відповідно до своїх прав.
 
-| Частина                                 | Що це                                                 | Стек                                               | Документація                                                                           |
-| --------------------------------------- | ----------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [`admin-panel/`](./admin-panel)         | Веб-панель для користувачів і адміністраторів         | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4 | [README](./admin-panel/README.md) · [Архітектурні рішення](./admin-panel/DECISIONS.md) |
-| [`client-app/`](./client-app)           | Застосунок для навчання: сайт + мобільний (Capacitor) | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4 | [README](./client-app/README.md)                                                       |
-| [`backend-node-app/`](backend-node-app) | REST API                                              | Node.js · TypeScript · Express                     | [README](backend-node-app/README.md)                                                   |
+| Частина                                 | Що це                                                 | Стек                                                 | Документація                                                                           |
+| --------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [`admin-panel/`](./admin-panel)         | Веб-панель для користувачів і адміністраторів         | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4   | [README](./admin-panel/README.md) · [Архітектурні рішення](./admin-panel/DECISIONS.md) |
+| [`client-app/`](./client-app)           | Застосунок для навчання: сайт + мобільний (Capacitor) | Vue 3 · TypeScript · Vite · Pinia · Tailwind CSS 4   | [README](./client-app/README.md)                                                       |
+| [`backend-node-app/`](backend-node-app) | REST API                                              | Node.js · TypeScript · Express · Prisma · PostgreSQL | [README](backend-node-app/README.md)                                                   |
 
 ## Швидкий старт
 
@@ -22,6 +22,8 @@
 cd backend-node-app
 npm install
 cp .env.example .env
+npm run db:up        # PostgreSQL у Docker
+npm run db:migrate
 npm run dev
 ```
 

@@ -51,7 +51,7 @@ npm run dev
 | `npm run start`                     | Запускає зібраний сервер: `node dist/server.js` (спочатку `build`)  |
 | `npm run typecheck`                 | Перевірка типів без збирання                                        |
 | `npm run db:up` / `db:down`         | Запустити / зупинити PostgreSQL у Docker                            |
-| `npm run db:migrate`                | Створити й застосувати міграцію за змінами в `schema.prisma` (dev)  |
+| `npm run db:migrate`                | Створити й застосувати міграцію за змінами в `prisma/schema/` (dev)  |
 | `npm run db:deploy`                 | Застосувати наявні міграції (прод, CI)                              |
 | `npm run db:generate`               | Згенерувати Prisma Client (автоматично після `npm install`)         |
 | `npm run db:studio`                 | Prisma Studio — перегляд і редагування даних у браузері             |
@@ -123,7 +123,7 @@ src/
 
 **PostgreSQL 18** у класичному реляційному стилі: нормалізовані таблиці, зовнішні ключі, зв'язки «багато-до-багатьох» — через **таблиці-мости** (junction tables).
 
-**Prisma 7:** схема — `prisma/schema.prisma`, міграції — `prisma/migrations/` (Prisma Migrate), підключення — через `@prisma/adapter-pg`, URL — у `prisma.config.ts` з `DATABASE_URL`. Імена в базі — `snake_case` через `@map` / `@@map`, у коді — `camelCase`.
+**Prisma 7:** схема — `prisma/schema/` (multi-file: `schema.prisma` — generator і datasource, моделі — по файлу на модуль, напр. `user.prisma`), міграції — `prisma/migrations/` (Prisma Migrate), підключення — через `@prisma/adapter-pg`, URL — у `prisma.config.ts` з `DATABASE_URL`. Імена в базі — `snake_case` через `@map` / `@@map`, у коді — `camelCase`.
 
 **Зараз у базі:** `users` (`id`, `email`, `name`, `role`, `created_at`, `updated_at`). Решта таблиць нижче — план.
 
