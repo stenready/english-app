@@ -101,8 +101,9 @@ const apiFetch = ofetch.create({
   },
 })
 
-const isAuthEndpoint = (path: string): boolean =>
-  path.includes(restUrls.AUTH_REFRESH)
+const isAuthEndpoint = (path: string): boolean => {
+  return path.includes(restUrls.AUTH_REFRESH)
+}
 
 const request = async <T>(
   path: string,
@@ -154,8 +155,9 @@ export const rest = Object.assign(
   },
 )
 
-const getOperationName = (query: string): string =>
-  query.match(OPERATION_NAME_REGEX)?.[1] ?? ''
+const getOperationName = (query: string): string => {
+  return query.match(OPERATION_NAME_REGEX)?.[1] ?? ''
+}
 
 export const graphql = async <
   TData,

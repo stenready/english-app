@@ -57,12 +57,15 @@ const createRandom = (seed: number) => {
   }
 }
 
-const createHash = (random: () => number): string =>
-  Array.from({ length: HASH_LENGTH }, () =>
+const createHash = (random: () => number): string => {
+  return Array.from({ length: HASH_LENGTH }, () =>
     (random() % HEX_RADIX).toString(HEX_RADIX),
   ).join('')
+}
 
-const pick = <T>(list: T[], index: number): T => list[index % list.length]
+const pick = <T>(list: T[], index: number): T => {
+  return list[index % list.length]
+}
 
 export const userRecords: UserRecord[] = Array.from(
   { length: RECORDS_COUNT },

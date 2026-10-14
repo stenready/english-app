@@ -27,7 +27,6 @@
   "validation.sameAs": "Поле «{field}» не збігається",
   "users.list.searchButton": "Знайти",
   "users.list.addUser": "Додати користувача",
-  "users.demo.title": "Демо-дані ({count})",
   "users.demo.columnId": "ID",
   "users.demo.columnUserName": "Ім'я користувача",
   "users.demo.columnStatus": "Статус",
@@ -47,5 +46,17 @@
   "users.demo.columnCountry": "Країна",
   "users.demo.columnIpAddress": "IP-адреса",
   "users.demo.columnCreatedAt": "Зареєстрований",
-  "users.demo.columnLastLoginAt": "Останній вхід"
+  "users.demo.columnLastLoginAt": "Останній вхід",
+  "table.firstRows": "Перші {count}",
+  "table.pageSize": "Кількість рядків",
+  "table.pagination": "Пагінація",
+  "table.prevPage": "Попередня сторінка",
+  "table.nextPage": "Наступна сторінка",
+  "table.page": "Сторінка {page}",
+  "table.firstPage": "Перша сторінка",
+  "table.lastPage": "Остання сторінка",
+  "table.filter": "Фільтрувати",
+  "table.activeFilters": "Активних фільтрів: {count}",
+  "table.resetFilters": "Скинути фільтри",
+  "common.loading": "Завантаження…"
 }

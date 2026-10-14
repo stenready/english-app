@@ -1,20 +1,25 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useForm } from 'vee-validate'
-import AppButton from '@/components/app/forms/AppButton.vue'
+import { useLoader } from '@/use/useLoader'
+import AppButton from '@/components/app/AppButton.vue'
 import AppInput from '@/components/app/forms/AppInput.vue'
 import AppCard from '@/components/app/AppCard.vue'
 import AppDropdown from '@/components/app/AppDropdown.vue'
 import AppTable from '@/components/app/AppTable.vue'
+import IconEye from '@/components/svg/IconEye.vue'
+import IconPencil from '@/components/svg/IconPencil.vue'
 import IconPlus from '@/components/svg/IconPlus.vue'
+import IconTrash from '@/components/svg/IconTrash.vue'
 import IconSearch from '@/components/svg/IconSearch.vue'
 import IconUsers from '@/components/svg/IconUsers.vue'
 import { ruleMaxLength, ruleMinLength } from '@/helpers/validationRules'
 import recordStatuses, { type RecordStatus } from '@/constants/recordStatuses'
 import { userRecords } from '@/mocks/userRecords'
 import type { AppDropdownItem } from '@/types/dropdown'
-import type { AppTableColumn } from '@/types/table'
+import { DEFAULT_TABLE_FIRST } from '@/constants/tablePagination'
+import type { AppTableColumn, AppTablePagination } from '@/types/table'
 import type { UserRecord } from '@/types/userRecord'
 
 const PAGE_NAME = 'UsersListPage'
@@ -43,25 +48,46 @@ const STATUS_CLASSES: Record<RecordStatus, string> = {
 
 const { t, locale } = useI18n()
 
-const search = ref('')
-// The table filters by the applied query: it changes only on submit (button / Enter)
-const appliedSearch = ref('')
+const { handleSubmit, resetForm } = useForm()
 
-const { handleSubmit } = useForm()
+const { startLoading, stopLoading } = useLoader()
+
+const filters = ref({ search: '' })
+const pagination = ref<AppTablePagination>({
+  first: DEFAULT_TABLE_FIRST,
+  skip: 0,
+  sortKey: undefined,
+  reverse: undefined,
+})
+
+// Current page from the server: already filtered, sorted and cut by first/skip
+const records = ref<UserRecord[]>([])
 
 const demoColumns = computed<AppTableColumn[]>(() => [
-  { key: 'id', label: t('users.demo.columnId') },
-  { key: 'userName', label: t('users.demo.columnUserName') },
-  { key: 'status', label: t('users.demo.columnStatus') },
+  { key: 'id', label: t('users.demo.columnId'), isSortable: true },
+  {
+    key: 'userName',
+    label: t('users.demo.columnUserName'),
+    isSortable: true,
+  },
+  { key: 'status', label: t('users.demo.columnStatus'), isSortable: true },
   { key: 'description', label: t('users.demo.columnDescription') },
   { key: 'hash', label: t('users.demo.columnHash') },
   { key: 'secretWord', label: t('users.demo.columnSecretWord') },
-  { key: 'email', label: t('users.demo.columnEmail') },
-  { key: 'role', label: t('users.demo.columnRole') },
-  { key: 'country', label: t('users.demo.columnCountry') },
+  { key: 'email', label: t('users.demo.columnEmail'), isSortable: true },
+  { key: 'role', label: t('users.demo.columnRole'), isSortable: true },
+  { key: 'country', label: t('users.demo.columnCountry'), isSortable: true },
   { key: 'ipAddress', label: t('users.demo.columnIpAddress') },
-  { key: 'createdAt', label: t('users.demo.columnCreatedAt') },
-  { key: 'lastLoginAt', label: t('users.demo.columnLastLoginAt') },
+  {
+    key: 'createdAt',
+    label: t('users.demo.columnCreatedAt'),
+    isSortable: true,
+  },
+  {
+    key: 'lastLoginAt',
+    label: t('users.demo.columnLastLoginAt'),
+    isSortable: true,
+  },
   {
     key: 'actions',
     label: t('users.demo.columnActions'),
@@ -77,54 +103,96 @@ const statusLabels = computed<Record<RecordStatus, string>>(() => ({
 }))
 
 const recordActionItems = computed<AppDropdownItem<RecordAction>[]>(() => [
-  { key: recordActions.VIEW, label: t('users.demo.actionView') },
-  { key: recordActions.EDIT, label: t('users.demo.actionEdit') },
+  {
+    key: recordActions.VIEW,
+    label: t('users.demo.actionView'),
+    icon: IconEye,
+    isShow: true,
+  },
+  {
+    key: recordActions.EDIT,
+    label: t('users.demo.actionEdit'),
+    icon: IconPencil,
+    isShow: true,
+  },
   {
     key: recordActions.DELETE,
     label: t('users.demo.actionDelete'),
+    icon: IconTrash,
     danger: true,
+    isShow: true,
   },
 ])
 
-const formatDate = (value: string): string =>
-  new Date(value).toLocaleDateString(locale.value)
+// Add new filters to the list
+const activeFiltersCount = computed<number>(
+  () => [filters.value.search.trim()].filter(Boolean).length,
+)
 
-const formatDateTime = (value: string): string =>
-  new Date(value).toLocaleString(locale.value)
+const formatDate = (value: string): string => {
+  return new Date(value).toLocaleDateString(locale.value)
+}
+
+const formatDateTime = (value: string): string => {
+  return new Date(value).toLocaleString(locale.value)
+}
 
 // Blocked records get a light danger tint
-const getRecordRowClass = (record: UserRecord): string | undefined =>
-  record.status === recordStatuses.BLOCKED ? 'bg-danger/5' : undefined
+const getRecordRowClass = (record: UserRecord): string | undefined => {
+  return record.status === recordStatuses.BLOCKED ? 'bg-danger/5' : undefined
+}
 
-// "stas.radchenko" → "sr"
-const getInitials = (userName: string): string =>
-  userName
+const getInitials = (userName: string): string => {
+  return userName
     .split(USER_NAME_SEPARATOR)
     .slice(0, INITIALS_COUNT)
     .map((part) => part.charAt(0))
     .join('')
+}
 
-const maskSecret = (value: string): string =>
-  SECRET_MASK_CHAR.repeat(value.length)
+const maskSecret = (value: string): string => {
+  return SECRET_MASK_CHAR.repeat(value.length)
+}
 
-const filteredRecords = computed<UserRecord[]>(() => {
-  const query = appliedSearch.value.trim().toLowerCase()
+const onRecordAction = (action: RecordAction, record: UserRecord): void => {
+  console.log(action, record)
+}
 
-  if (!query) return userRecords
+const onPagination = (value: AppTablePagination): void => {
+  pagination.value = value
+  getList()
+}
 
-  return userRecords.filter((record) =>
-    record.userName.toLowerCase().includes(query),
-  )
-})
+const resetFilters = (): void => {
+  filters.value.search = ''
+  resetForm()
+  getList()
+}
+
+const getList = async (): Promise<void> => {
+  startLoading()
+
+  try {
+    const r = {
+      ...pagination.value,
+      ...filters.value,
+    }
+    console.log(r, 'request data')
+    // Mock response until the backend: the server will get pagination + filters
+    records.value = await Promise.resolve(userRecords)
+  } catch (err) {
+    console.error(err)
+  } finally {
+    stopLoading()
+  }
+}
 
 // Runs only when the search rules pass
-const applySearch = handleSubmit(() => {
-  appliedSearch.value = search.value
-})
+const applySearch = handleSubmit(getList)
 
-const resetSearch = (): void => {
-  appliedSearch.value = ''
-}
+onMounted(() => {
+  getList()
+})
 </script>
 
 <template>
@@ -144,39 +212,48 @@ const resetSearch = (): void => {
         </AppButton>
       </template>
 
-      <form class="flex items-start gap-3" @submit.prevent="applySearch">
-        <AppInput
-          v-model="search"
-          type="search"
-          size="md"
-          :clearable="true"
-          class="flex-1"
-          name="search"
-          :placeholder="t('users.list.searchPlaceholder')"
-          :rules="[
-            ruleMinLength(SEARCH_MIN_LENGTH),
-            ruleMaxLength(SEARCH_MAX_LENGTH),
-          ]"
-          @clear="resetSearch"
-        >
-          <template #prevIcon>
-            <IconSearch />
-          </template>
-        </AppInput>
-
-        <AppButton variant="outline-primary" type="submit">{{
-          t('users.list.searchButton')
-        }}</AppButton>
-      </form>
       <AppTable
-        class="mt-6"
         :columns="demoColumns"
-        :rows="filteredRecords"
+        :rows="records"
         row-key="id"
         :tbody-tr-class="getRecordRowClass"
+        sticky-header
+        :total-rows="records.length"
+        is-show-first-selector
+        is-show-pagination
+        :filters-count="activeFiltersCount"
+        @reset-filters="resetFilters"
+        @pagination="onPagination"
       >
         <template #header>
-          {{ t('users.demo.title', { count: filteredRecords.length }) }}
+          {{ t('users.list.count', { count: records.length }) }}
+        </template>
+
+        <template #filters>
+          <form class="flex items-start gap-3" @submit.prevent="applySearch">
+            <AppInput
+              v-model="filters.search"
+              type="search"
+              size="md"
+              :clearable="true"
+              class="flex-1"
+              name="search"
+              :placeholder="t('users.list.searchPlaceholder')"
+              :rules="[
+                ruleMinLength(SEARCH_MIN_LENGTH),
+                ruleMaxLength(SEARCH_MAX_LENGTH),
+              ]"
+              @clear="getList"
+            >
+              <template #prevIcon>
+                <IconSearch />
+              </template>
+            </AppInput>
+
+            <AppButton variant="outline-primary" type="submit">{{
+              t('users.list.searchButton')
+            }}</AppButton>
+          </form>
         </template>
 
         <template #cell-id="{ row }">
@@ -253,11 +330,12 @@ const resetSearch = (): void => {
           }}</span>
         </template>
 
-        <template #cell-actions>
+        <template #cell-actions="{ row }">
           <div class="flex justify-end">
             <AppDropdown
               :items="recordActionItems"
               :label="t('users.demo.columnActions')"
+              @select="onRecordAction($event, row)"
             />
           </div>
         </template>

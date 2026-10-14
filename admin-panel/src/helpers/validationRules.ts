@@ -12,34 +12,51 @@ const getFieldName = ({
 }: {
   label?: string
   name: string
-}): string => label ?? name
+}): string => {
+  return label ?? name
+}
 
-export const ruleRequired: ValidationRule = (value, ctx) =>
-  Boolean(value.trim()) ||
-  t('validation.required', { field: getFieldName(ctx) })
+// Empty: null / undefined (nothing chosen in a select) or a blank string
+const isEmpty = (value: unknown): boolean => {
+  return (
+    value === null ||
+    value === undefined ||
+    (typeof value === 'string' && !value.trim())
+  )
+}
+
+// Any field type: inputs (string), selects (value | null)…
+export const ruleRequired: ValidationRule<unknown> = (value, ctx) => {
+  return (
+    !isEmpty(value) || t('validation.required', { field: getFieldName(ctx) })
+  )
+}
 
 // Empty value is valid: combine with ruleRequired when the field is mandatory
-export const ruleEmail: ValidationRule = (value, ctx) =>
-  !value ||
-  EMAIL_PATTERN.test(value) ||
-  t('validation.email', { field: getFieldName(ctx) })
+export const ruleEmail: ValidationRule = (value, ctx) => {
+  return (
+    !value ||
+    EMAIL_PATTERN.test(value) ||
+    t('validation.email', { field: getFieldName(ctx) })
+  )
+}
 
-export const ruleMinLength =
-  (min: number): ValidationRule =>
-  (value, ctx) =>
+export const ruleMinLength = (min: number): ValidationRule => {
+  return (value, ctx) =>
     !value ||
     value.length >= min ||
     t('validation.minLength', { field: getFieldName(ctx), min })
+}
 
-export const ruleMaxLength =
-  (max: number): ValidationRule =>
-  (value, ctx) =>
+export const ruleMaxLength = (max: number): ValidationRule => {
+  return (value, ctx) =>
     value.length <= max ||
     t('validation.maxLength', { field: getFieldName(ctx), max })
+}
 
 // Equal to another field of the same form, e.g. ruleSameAs('password')
-export const ruleSameAs =
-  (otherField: string): ValidationRule =>
-  (value, ctx) =>
+export const ruleSameAs = (otherField: string): ValidationRule => {
+  return (value, ctx) =>
     value === ctx.form[otherField] ||
     t('validation.sameAs', { field: getFieldName(ctx) })
+}

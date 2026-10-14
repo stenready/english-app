@@ -9,8 +9,9 @@ const COMPONENT_NAME = 'AppValidationContainer'
 defineOptions({ name: COMPONENT_NAME })
 
 const props = defineProps<{
-  // Field path in the parent form (useForm)
-  name: string
+  // Field path in the parent form (useForm). Without a name the field is
+  // validated on its own and doesn't get into the form values
+  name?: string
   // Checked in order, the first error is shown
   rules?: ValidationRule<TValue>[]
   // Field name in error messages
@@ -27,14 +28,17 @@ defineSlots<{
 }>()
 
 const errorId = useId()
+const fallbackName = useId()
 const { locale } = useI18n()
 
 const { errorMessage, handleBlur, handleChange, validate } = useField<TValue>(
-  () => props.name,
+  () => props.name ?? fallbackName,
   computed(() => props.rules),
   {
     label: () => props.label,
     initialValue: props.value,
+    // Not part of useForm without an explicit name (no "v-3" keys in values)
+    controlled: Boolean(props.name),
   },
 )
 

@@ -1,5 +1,18 @@
 <script setup lang="ts" generic="TRow extends object">
-import type { AppTableColumn } from '@/types/table'
+import { computed, ref, useId, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import AppPagination from '@/components/app/AppPagination.vue'
+import AppButton from '@/components/app/AppButton.vue'
+import AppSelect from '@/components/app/forms/AppSelect.vue'
+import IconChevronDown from '@/components/svg/IconChevronDown.vue'
+import IconClose from '@/components/svg/IconClose.vue'
+import IconSort from '@/components/svg/IconSort.vue'
+import {
+  DEFAULT_TABLE_FIRST,
+  TABLE_FIRST_OPTIONS,
+} from '@/constants/tablePagination'
+import type { AppSelectOption } from '@/types/select'
+import type { AppTableColumn, AppTablePagination } from '@/types/table'
 
 const COMPONENT_NAME = 'AppTable'
 
@@ -12,27 +25,151 @@ const props = defineProps<{
   // Extra classes for a row, e.g. (row) => (row.isBlocked ? 'bg-danger/5' : undefined).
   // Use colors, not opacity: a faded sticky cell would show the columns under it
   tbodyTrClass?: (row: TRow, index: number) => string | undefined
+  // Rows scroll inside the table (up to the screen height) and the header stays.
+  // CSS can't stick it to the page scroll: the horizontal scroll container catches it
+  stickyHeader?: boolean
+  // "First 10/20/…" selector in the header; the choice comes in @pagination
+  isShowFirstSelector?: boolean
+  // Page buttons in the header; the choice comes in @pagination as { first, skip }
+  isShowPagination?: boolean
+  // All rows across pages (the table itself only gets the current page)
+  totalRows?: number
+  // Applied filters: a badge with the number on the "Filter" button (hidden at 0)
+  filtersCount?: number
 }>()
+
+const emit = defineEmits<{
+  pagination: [pagination: AppTablePagination]
+  // ✕ on the Filter button: the page clears its filters
+  resetFilters: []
+}>()
+
+// Optional v-model:first to set or read it from above; works on its own without it
+const first = defineModel<number>('first', { default: DEFAULT_TABLE_FIRST })
+
+// Optional v-model:filters-open, e.g. to keep the panel open while filters are applied
+const isFiltersOpen = defineModel<boolean>('filtersOpen', { default: false })
 
 defineSlots<{
   header?: () => unknown
+  // Controls on the right of the header row (page size, filters…)
+  headerActions?: () => unknown
+  // Filter controls: a "Filter" toggle appears in the header, the slot opens under it
+  filters?: () => unknown
   empty?: () => unknown
   [cell: `cell-${string}`]: (props: { row: TRow; index: number }) => unknown
   [head: `head-${string}`]: (props: { column: AppTableColumn }) => unknown
 }>()
 
+const { t } = useI18n()
+const filtersId = useId()
+
+const firstOptions = computed<AppSelectOption<number>[]>(() =>
+  TABLE_FIRST_OPTIONS.map((count) => ({
+    value: count,
+    label: t('table.firstRows', { count }),
+  })),
+)
+
+const FIRST_PAGE = 1
+
+// Kept inside: outside only first/skip matter
+const page = ref(FIRST_PAGE)
+const sortKey = ref<string>()
+const reverse = ref<boolean>()
+
+const totalRowsCount = computed<number>(
+  () => props.totalRows ?? props.rows.length,
+)
+
+const pageCount = computed<number>(() =>
+  Math.max(FIRST_PAGE, Math.ceil(totalRowsCount.value / first.value)),
+)
+
+// The table only reports the choice: the page decides which rows to show
+// (slice locally now, a first/skip request later)
+const emitPagination = (): void => {
+  emit('pagination', {
+    first: first.value,
+    skip: (page.value - FIRST_PAGE) * first.value,
+    sortKey: sortKey.value,
+    reverse: reverse.value,
+  })
+}
+
+// A new column starts ascending, the same one flips; the order changes, so back to page 1
+const sortBy = (key: string): void => {
+  if (sortKey.value === key) {
+    reverse.value = !reverse.value
+  } else {
+    sortKey.value = key
+    reverse.value = false
+  }
+
+  page.value = FIRST_PAGE
+  emitPagination()
+}
+
+const getSortDirection = (key: string): 'asc' | 'desc' | undefined => {
+  if (sortKey.value !== key) return undefined
+
+  return reverse.value ? 'desc' : 'asc'
+}
+
+const getAriaSort = (
+  column: AppTableColumn,
+): 'ascending' | 'descending' | 'none' | undefined => {
+  if (!column.isSortable) return undefined
+  if (sortKey.value !== column.key) return 'none'
+
+  return reverse.value ? 'descending' : 'ascending'
+}
+
+// Hidden when everything fits on one page
+const isPaginationVisible = computed<boolean>(
+  () => Boolean(props.isShowPagination) && pageCount.value > FIRST_PAGE,
+)
+
+const onPageChange = (value: number): void => {
+  page.value = value
+  emitPagination()
+}
+
+// One watcher, one event (a backend gets one request):
+// a new page size starts from the first page; fewer rows (e.g. after a search)
+// may leave the current page out of range
+watch([first, pageCount], ([newFirst, count], [oldFirst]) => {
+  if (newFirst !== oldFirst) {
+    page.value = FIRST_PAGE
+  } else if (page.value > count) {
+    page.value = count
+  } else {
+    return
+  }
+
+  emitPagination()
+})
+
 // A column key may be virtual (e.g. "actions"), so it is not tied to keyof TRow
-const getCellValue = (row: TRow, key: string): unknown =>
-  (row as Record<string, unknown>)[key]
+const getCellValue = (row: TRow, key: string): unknown => {
+  return (row as Record<string, unknown>)[key]
+}
 
-const getRowKey = (row: TRow): string => String(row[props.rowKey])
+const getRowKey = (row: TRow): string => {
+  return String(row[props.rowKey])
+}
 
-const getRowClass = (row: TRow, index: number): string | undefined =>
-  props.tbodyTrClass?.(row, index)
+const getRowClass = (row: TRow, index: number): string | undefined => {
+  return props.tbodyTrClass?.(row, index)
+}
 
 // Opaque background so scrolled columns don't show through; the inset shadow
 // is the divider (a border would vanish with collapsed table borders)
 const STICKY_CLASS = 'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--border)]'
+
+// Screen height minus the app top bar, page paddings and the table title:
+// once the page is scrolled to the table, the table fills the screen
+const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
 </script>
 
 <template>
@@ -41,16 +178,116 @@ const STICKY_CLASS = 'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--border)]'
     class="overflow-hidden rounded-xl border border-border bg-background shadow-xs"
   >
     <div
-      v-if="$slots.header"
-      class="border-b border-border px-5 py-4 text-[15px] font-semibold"
+      v-if="
+        $slots.header ||
+        $slots.headerActions ||
+        $slots.filters ||
+        props.isShowFirstSelector ||
+        isPaginationVisible
+      "
+      class="preview-table flex items-center justify-between gap-4 border-b border-border px-5 py-3"
     >
-      <slot name="header" />
+      <div class="text-[15px] font-semibold">
+        <slot name="header" />
+      </div>
+      <div
+        v-if="
+          $slots.headerActions ||
+          $slots.filters ||
+          props.isShowFirstSelector ||
+          isPaginationVisible
+        "
+        class="flex flex-wrap items-center justify-end gap-2"
+      >
+        <slot name="headerActions" />
+        <AppPagination
+          v-if="isPaginationVisible"
+          :page="page"
+          :total-rows="totalRowsCount"
+          :per-page="first"
+          @update:page="onPageChange"
+        />
+        <AppSelect
+          v-if="props.isShowFirstSelector"
+          v-model="first"
+          :options="firstOptions"
+          :aria-label="t('table.pageSize')"
+        />
+        <!-- Filter toggle + ✕ reset as one group: a button can't contain a button -->
+        <div v-if="$slots.filters" class="relative inline-flex">
+          <AppButton
+            variant="outline"
+            :class="{ 'rounded-r-none': props.filtersCount }"
+            :aria-expanded="isFiltersOpen"
+            :aria-controls="filtersId"
+            @click="isFiltersOpen = !isFiltersOpen"
+          >
+            {{ t('table.filter') }}
+            <IconChevronDown
+              class="transition-transform duration-200"
+              :class="{ 'rotate-180': isFiltersOpen }"
+            />
+            <span v-if="props.filtersCount" class="sr-only">
+              {{ t('table.activeFilters', { count: props.filtersCount }) }}
+            </span>
+          </AppButton>
+          <AppButton
+            v-if="props.filtersCount"
+            variant="outline"
+            class="-ml-px rounded-l-none px-3"
+            :aria-label="t('table.resetFilters')"
+            @click="emit('resetFilters')"
+          >
+            <IconClose />
+          </AppButton>
+          <span
+            v-if="props.filtersCount"
+            class="pointer-events-none absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs leading-none font-semibold text-primary-foreground ring-2 ring-background"
+            aria-hidden="true"
+          >
+            {{ props.filtersCount }}
+          </span>
+        </div>
+      </div>
     </div>
 
+    <!-- Height animates via grid rows 0fr → 1fr (as the field error does).
+         1fr only in enter-to / leave-from: a static class would override 0fr -->
+    <Transition
+      enter-active-class="transition-all duration-250 ease-out motion-reduce:transition-none"
+      enter-from-class="grid-rows-[0fr] opacity-0"
+      enter-to-class="grid-rows-[1fr]"
+      leave-from-class="grid-rows-[1fr]"
+      leave-active-class="transition-all duration-200 ease-in motion-reduce:transition-none"
+      leave-to-class="grid-rows-[0fr] opacity-0"
+    >
+      <div
+        v-if="$slots.filters && isFiltersOpen"
+        :id="filtersId"
+        class="grid border-b border-border bg-surface"
+      >
+        <div class="min-h-0 overflow-hidden">
+          <div class="px-5 py-4">
+            <slot name="filters" />
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Wide tables scroll horizontally instead of stretching the page -->
-    <div class="overflow-x-auto">
+    <div
+      :class="
+        props.stickyHeader
+          ? ['overflow-auto', STICKY_HEADER_MAX_HEIGHT]
+          : 'overflow-x-auto'
+      "
+    >
       <table class="w-full text-left text-sm">
-        <thead class="border-b border-border bg-surface">
+        <!-- Inset shadow instead of border-b: a border would scroll away when sticky -->
+        <thead
+          class="bg-surface shadow-[inset_0_-1px_0_var(--border)]"
+          :class="{ 'sticky top-0 z-20': props.stickyHeader }"
+        >
           <tr>
             <th
               v-for="column in columns"
@@ -61,8 +298,28 @@ const STICKY_CLASS = 'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--border)]'
                 column.thClassName,
                 column.isSticky && [STICKY_CLASS, 'bg-surface'],
               ]"
+              :aria-sort="getAriaSort(column)"
             >
-              <slot :name="`head-${column.key}`" :column="column">
+              <button
+                v-if="column.isSortable"
+                type="button"
+                class="group/sort inline-flex cursor-pointer items-center gap-1 rounded uppercase outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/30"
+                :class="{ 'text-foreground': sortKey === column.key }"
+                @click="sortBy(column.key)"
+              >
+                <slot :name="`head-${column.key}`" :column="column">
+                  {{ column.label }}
+                </slot>
+                <IconSort
+                  class="size-3.5 shrink-0 transition-opacity"
+                  :class="{
+                    'opacity-50 group-hover/sort:opacity-100':
+                      sortKey !== column.key,
+                  }"
+                  :direction="getSortDirection(column.key)"
+                />
+              </button>
+              <slot v-else :name="`head-${column.key}`" :column="column">
                 {{ column.label }}
               </slot>
             </th>

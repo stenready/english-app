@@ -60,16 +60,19 @@ const ariaLabel = computed<string | undefined>(
   () => props.label ?? props.placeholder,
 )
 
-const getInputAttrs = (): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(attrs).filter(([name]) => !WRAPPER_ATTRS.includes(name)),
-  )
+// Browser suggestions are off by default; a parent's autocomplete="email" etc. overrides it
+const getInputAttrs = (): Record<string, unknown> => {
+  return {
+    autocomplete: 'off',
+    ...Object.fromEntries(
+      Object.entries(attrs).filter(([name]) => !WRAPPER_ATTRS.includes(name)),
+    ),
+  }
+}
 
-const getInputId = (): string =>
-  typeof attrs.id === 'string' ? attrs.id : fallbackId
-
-// Field path for vee-validate; the id keeps fields without a name unique
-const getFieldName = (): string => props.name ?? getInputId()
+const getInputId = (): string => {
+  return typeof attrs.id === 'string' ? attrs.id : fallbackId
+}
 
 const clear = (): void => {
   model.value = ''
@@ -81,7 +84,7 @@ const clear = (): void => {
 <template>
   <AppValidationContainer
     v-slot="{ invalid, errorId, onBlur }"
-    :name="getFieldName()"
+    :name="props.name"
     :rules="props.rules"
     :label="ariaLabel"
     :value="model"
