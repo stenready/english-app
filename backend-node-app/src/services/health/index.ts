@@ -6,7 +6,9 @@ export interface HealthStatus extends RuntimeStatus {
   status: typeof HEALTH_STATUS_OK
 }
 
-export const getHealthStatus = (): HealthStatus => ({
-  status: HEALTH_STATUS_OK,
-  ...getRuntimeStatus(),
-})
+export const getHealthStatus = (): HealthStatus => {
+  return {
+    status: HEALTH_STATUS_OK,
+    ...getRuntimeStatus(),
+  }
+}

@@ -31,6 +31,10 @@
       "development": "./src/errors/*.ts",
       "default": "./dist/errors/*.js"
     },
+    "#helpers/*": {
+      "development": "./src/helpers/*.ts",
+      "default": "./dist/helpers/*.js"
+    },
     "#generated/*": {
       "development": "./src/generated/*.ts",
       "default": "./dist/generated/*.js"
@@ -54,6 +58,10 @@
     "#types/*": {
       "development": "./src/types/*.ts",
       "default": "./dist/types/*.js"
+    },
+    "#validation/*": {
+      "development": "./src/validation/*.ts",
+      "default": "./dist/validation/*.js"
     }
   },
   "//": [
@@ -102,7 +110,8 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
-    "morgan": "^1.11.0"
+    "morgan": "^1.11.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

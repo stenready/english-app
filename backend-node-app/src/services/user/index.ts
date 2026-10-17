@@ -1,67 +1,52 @@
+import { ERROR_CODES } from '#constants/errorCodes'
 import { HTTP_STATUS } from '#constants/httpStatus'
 import { AppError } from '#errors/AppError'
+import { createPage } from '#helpers/pagination'
 import userRepository from '#repositories/user'
-import type { User, UserInput } from '#types/user'
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const NAME_MIN_LENGTH = 2
-// ids are Postgres uuid: a malformed id can't exist, and would make the query itself fail
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-interface ValidationIssue {
-  field: keyof UserInput
-  message: string
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const assertValid = (payload: unknown): UserInput => {
-  const { email, name } = isRecord(payload) ? payload : {}
-  const issues: ValidationIssue[] = []
-
-  // Emails are case-insensitive: normalize before validating and comparing
-  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : ''
-
-  if (!EMAIL_PATTERN.test(normalizedEmail)) {
-    issues.push({ field: 'email', message: 'Must be a valid email address.' })
-  }
-
-  const normalizedName = typeof name === 'string' ? name.trim() : ''
-
-  if (normalizedName.length < NAME_MIN_LENGTH) {
-    issues.push({ field: 'name', message: `Must be at least ${NAME_MIN_LENGTH} characters.` })
-  }
-
-  if (issues.length > 0) {
-    throw new AppError(HTTP_STATUS.UNPROCESSABLE_ENTITY, 'Validation failed.', issues)
-  }
-
-  return { email: normalizedEmail, name: normalizedName }
-}
+import { parseOrThrow } from '#validation/parseOrThrow'
+import {
+  userInputSchema,
+  userListQuerySchema,
+  userParamsSchema,
+  userUpdateSchema,
+} from '#validation/user'
+import type { Page } from '#types/pagination'
+import type { User } from '#types/user'
 
 const assertEmailIsFree = async (email: string, currentUserId?: string): Promise<void> => {
   const owner = await userRepository.findByEmail(email)
 
   if (owner && owner.id !== currentUserId) {
-    throw new AppError(HTTP_STATUS.CONFLICT, 'Email is already taken.')
+    throw new AppError(HTTP_STATUS.CONFLICT, ERROR_CODES.EMAIL_TAKEN, 'Email is already taken.')
   }
 }
 
-const getUsers = (): Promise<User[]> => userRepository.findAll()
+const getUsers = async (query: unknown): Promise<Page<User>> => {
+  const { first, skip, search } = parseOrThrow(userListQuerySchema, query)
+  const { users, totalCount } = await userRepository.findPage({ first, skip }, { search })
 
+  return createPage({ items: users, totalCount, skip })
+}
+
+// Malformed id: 422 (client error, no query); well-formed but absent: 404
 const getUser = async (id: string): Promise<User> => {
-  const user = UUID_PATTERN.test(id) ? await userRepository.findById(id) : null
+  parseOrThrow(userParamsSchema, { id })
+
+  const user = await userRepository.findById(id)
 
   if (!user) {
-    throw new AppError(HTTP_STATUS.NOT_FOUND, `User ${id} was not found.`)
+    throw new AppError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_CODES.USER_NOT_FOUND,
+      `User ${id} was not found.`,
+    )
   }
 
   return user
 }
 
 const createUser = async (payload: unknown): Promise<User> => {
-  const data = assertValid(payload)
+  const data = parseOrThrow(userInputSchema, payload)
 
   await assertEmailIsFree(data.email)
 
@@ -70,11 +55,11 @@ const createUser = async (payload: unknown): Promise<User> => {
 
 const updateUser = async (id: string, payload: unknown): Promise<User> => {
   const user = await getUser(id)
-  const changes = isRecord(payload) ? payload : {}
-  const data = assertValid({
+  const changes = parseOrThrow(userUpdateSchema, payload)
+  const data = {
     email: changes.email ?? user.email,
     name: changes.name ?? user.name,
-  })
+  }
 
   await assertEmailIsFree(data.email, id)
 

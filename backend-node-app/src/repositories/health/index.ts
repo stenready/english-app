@@ -3,7 +3,9 @@ export interface RuntimeStatus {
   uptime: number
 }
 
-export const getRuntimeStatus = (): RuntimeStatus => ({
-  timestamp: new Date().toISOString(),
-  uptime: process.uptime(),
-})
+export const getRuntimeStatus = (): RuntimeStatus => {
+  return {
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  }
+}

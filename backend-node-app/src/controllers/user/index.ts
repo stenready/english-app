@@ -6,8 +6,11 @@ interface UserParams {
   id: string
 }
 
-const getUsers: RequestHandler = async (_request, response) => {
-  response.status(HTTP_STATUS.OK).json({ data: await userService.getUsers() })
+// GET /users?first=10&skip=0&search=stas → { data: User[], meta: { totalCount, hasNext, hasPrev } }
+const getUsers: RequestHandler = async (request, response) => {
+  const { items, meta } = await userService.getUsers(request.query)
+
+  response.status(HTTP_STATUS.OK).json({ data: items, meta })
 }
 
 const getUser: RequestHandler<UserParams> = async (request, response) => {

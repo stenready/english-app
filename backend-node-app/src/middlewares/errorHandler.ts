@@ -1,5 +1,6 @@
 import type { ErrorRequestHandler } from 'express'
 import { isProduction } from '#config/env'
+import { ERROR_CODES } from '#constants/errorCodes'
 import { HTTP_STATUS } from '#constants/httpStatus'
 import { AppError } from '#errors/AppError'
 
@@ -13,12 +14,15 @@ interface HttpError {
   message: string
 }
 
-const isHttpError = (error: unknown): error is HttpError =>
-  error instanceof Error &&
-  'status' in error &&
-  typeof error.status === 'number' &&
-  'expose' in error &&
-  typeof error.expose === 'boolean'
+const isHttpError = (error: unknown): error is HttpError => {
+  return (
+    error instanceof Error &&
+    'status' in error &&
+    typeof error.status === 'number' &&
+    'expose' in error &&
+    typeof error.expose === 'boolean'
+  )
+}
 
 export const errorHandler: ErrorRequestHandler = (error, _request, response, next) => {
   // Response already started: let Express close the connection
@@ -29,13 +33,15 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, nex
 
   if (error instanceof AppError) {
     response.status(error.statusCode).json({
-      error: { details: error.details, message: error.message },
+      error: { code: error.code, details: error.details, message: error.message },
     })
     return
   }
 
   if (isHttpError(error) && error.expose) {
-    response.status(error.status).json({ error: { message: error.message } })
+    response.status(error.status).json({
+      error: { code: ERROR_CODES.INVALID_REQUEST, message: error.message },
+    })
     return
   }
 
@@ -43,6 +49,7 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, nex
 
   response.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
     error: {
+      code: ERROR_CODES.INTERNAL,
       message: isProduction ? INTERNAL_ERROR_MESSAGE : error.message,
     },
   })
