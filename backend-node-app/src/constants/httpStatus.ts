@@ -5,5 +5,6 @@ export const HTTP_STATUS = Object.freeze({
   NO_CONTENT: 204,
   NOT_FOUND: 404,
   OK: 200,
+  PAYLOAD_TOO_LARGE: 413,
   UNPROCESSABLE_ENTITY: 422,
 } as const)

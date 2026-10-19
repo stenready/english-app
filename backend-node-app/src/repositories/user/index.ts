@@ -2,7 +2,7 @@ import { prisma } from '#db/client'
 import type { Prisma } from '#generated/prisma/client'
 import { escapeLike } from '#helpers/escapeLike'
 import type { PageParams } from '#types/pagination'
-import type { User, UserFilters, UserInput } from '#types/user'
+import type { User, UserCreateData, UserFilters, UserUpdateData } from '#types/user'
 
 interface UsersPage {
   users: User[]
@@ -43,12 +43,11 @@ const findByEmail = (email: string): Promise<User | null> => {
   return prisma.user.findUnique({ where: { email } })
 }
 
-const create = (data: UserInput): Promise<User> => {
-  // @ts-ignore
+const create = (data: UserCreateData): Promise<User> => {
   return prisma.user.create({ data })
 }
 
-const update = (id: string, changes: Partial<UserInput>): Promise<User> => {
+const update = (id: string, changes: UserUpdateData): Promise<User> => {
   return prisma.user.update({ where: { id }, data: changes })
 }
 

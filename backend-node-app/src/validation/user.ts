@@ -1,17 +1,32 @@
 import { z } from 'zod'
+import { UPLOAD_FOLDERS } from '#constants/uploads'
+import { UserStatus } from '#generated/prisma/enums'
 import { pageParamsSchema } from '#validation/pagination'
 
 const NAME_MIN_LENGTH = 2
+const PASSWORD_MIN_LENGTH = 8
+// argon2 takes any length; the cap only limits the hashing cost of a huge body
+const PASSWORD_MAX_LENGTH = 128
 // Same limit as the admin search input
 const SEARCH_MAX_LENGTH = 50
+// Only keys that POST /uploads/images creates for avatars: user/avatars/<uuid>.webp
+const AVATAR_KEY_PATTERN = new RegExp(
+  `^${UPLOAD_FOLDERS.USER_AVATARS}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.webp$`,
+)
 
 // Body of POST /users. Emails are case-insensitive: normalized before the check
 export const userInputSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
   name: z.string().trim().min(NAME_MIN_LENGTH),
+  // Not trimmed: spaces are valid password characters
+  password: z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH),
+  // From POST /uploads/images; null removes the avatar
+  avatarKey: z.string().regex(AVATAR_KEY_PATTERN).nullable().optional(),
+  // No status: the database default (ACTIVE)
+  status: z.enum(UserStatus).optional(),
 })
 
-// Body of PATCH /users/:id: only the fields that change
+// Body of PATCH /users/:id: only the fields that change; no password keeps the old one
 export const userUpdateSchema = userInputSchema.partial()
 
 // GET /users?first=10&skip=0&search=stas

@@ -1,8 +1,10 @@
+import { hash } from 'argon2'
 import { ERROR_CODES } from '#constants/errorCodes'
 import { HTTP_STATUS } from '#constants/httpStatus'
 import { AppError } from '#errors/AppError'
 import { createPage } from '#helpers/pagination'
 import userRepository from '#repositories/user'
+import storage from '#storage/s3'
 import { parseOrThrow } from '#validation/parseOrThrow'
 import {
   userInputSchema,
@@ -11,7 +13,7 @@ import {
   userUpdateSchema,
 } from '#validation/user'
 import type { Page } from '#types/pagination'
-import type { User } from '#types/user'
+import type { User, UserResponse } from '#types/user'
 
 const assertEmailIsFree = async (email: string, currentUserId?: string): Promise<void> => {
   const owner = await userRepository.findByEmail(email)
@@ -21,15 +23,31 @@ const assertEmailIsFree = async (email: string, currentUserId?: string): Promise
   }
 }
 
-const getUsers = async (query: unknown): Promise<Page<User>> => {
+const toUserResponse = (user: User): UserResponse => {
+  return {
+    ...user,
+    avatarUrl: user.avatarKey ? storage.getPublicUrl(user.avatarKey) : null,
+  }
+}
+
+// The file is no longer referenced: a failed delete only leaves an orphan, the save stands
+const deleteFileQuietly = async (key: string): Promise<void> => {
+  try {
+    await storage.deleteObject(key)
+  } catch (error) {
+    console.error(`Failed to delete ${key} from storage:`, error)
+  }
+}
+
+const getUsers = async (query: unknown): Promise<Page<UserResponse>> => {
   const { first, skip, search } = parseOrThrow(userListQuerySchema, query)
   const { users, totalCount } = await userRepository.findPage({ first, skip }, { search })
 
-  return createPage({ items: users, totalCount, skip })
+  return createPage({ items: users.map(toUserResponse), totalCount, skip })
 }
 
 // Malformed id: 422 (client error, no query); well-formed but absent: 404
-const getUser = async (id: string): Promise<User> => {
+const findUserOrThrow = async (id: string): Promise<User> => {
   parseOrThrow(userParamsSchema, { id })
 
   const user = await userRepository.findById(id)
@@ -45,31 +63,55 @@ const getUser = async (id: string): Promise<User> => {
   return user
 }
 
-const createUser = async (payload: unknown): Promise<User> => {
-  const data = parseOrThrow(userInputSchema, payload)
+const getUser = async (id: string): Promise<UserResponse> => {
+  return toUserResponse(await findUserOrThrow(id))
+}
+
+const createUser = async (payload: unknown): Promise<UserResponse> => {
+  const { password, ...data } = parseOrThrow(userInputSchema, payload)
 
   await assertEmailIsFree(data.email)
 
-  return userRepository.create(data)
+  const user = await userRepository.create({ ...data, passwordHash: await hash(password) })
+
+  return toUserResponse(user)
 }
 
-const updateUser = async (id: string, payload: unknown): Promise<User> => {
-  const user = await getUser(id)
-  const changes = parseOrThrow(userUpdateSchema, payload)
-  const data = {
-    email: changes.email ?? user.email,
+const updateUser = async (id: string, payload: unknown): Promise<UserResponse> => {
+  const user = await findUserOrThrow(id)
+  const { password, avatarKey, ...changes } = parseOrThrow(userUpdateSchema, payload)
+  const email = changes.email ?? user.email
+  // undefined: not sent, keep; null: remove; a key: replace
+  const isAvatarChanged = avatarKey !== undefined && avatarKey !== user.avatarKey
+
+  await assertEmailIsFree(email, id)
+
+  const updatedUser = await userRepository.update(id, {
+    email,
     name: changes.name ?? user.name,
+    // undefined: Prisma keeps the current one
+    status: changes.status,
+    ...(isAvatarChanged && { avatarKey }),
+    // Hashed only when a new one is sent
+    ...(password && { passwordHash: await hash(password) }),
+  })
+
+  // After the save: if it failed, the old avatar is still in use
+  if (isAvatarChanged && user.avatarKey) {
+    await deleteFileQuietly(user.avatarKey)
   }
 
-  await assertEmailIsFree(data.email, id)
-
-  return userRepository.update(id, data)
+  return toUserResponse(updatedUser)
 }
 
 const deleteUser = async (id: string): Promise<void> => {
-  await getUser(id)
+  const user = await findUserOrThrow(id)
 
   await userRepository.remove(id)
+
+  if (user.avatarKey) {
+    await deleteFileQuietly(user.avatarKey)
+  }
 }
 
 export default { createUser, deleteUser, getUser, getUsers, updateUser }
