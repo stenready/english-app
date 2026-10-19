@@ -33,6 +33,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     'border-transparent bg-info text-info-foreground hover:bg-info/90',
   [buttonVariants.WARNING]:
     'border-transparent bg-warning text-warning-foreground hover:bg-warning/90',
+  [buttonVariants.DANGER]:
+    'border-transparent bg-danger text-danger-foreground hover:bg-danger/90',
   [buttonVariants.OUTLINE]:
     'border-border bg-transparent text-foreground hover:bg-nav-hover',
   [buttonVariants.OUTLINE_PRIMARY]:
@@ -41,6 +43,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     'border-info bg-transparent text-info hover:bg-info/10',
   [buttonVariants.OUTLINE_WARNING]:
     'border-warning bg-transparent text-warning hover:bg-warning/10',
+  [buttonVariants.OUTLINE_DANGER]:
+    'border-danger bg-transparent text-danger hover:bg-danger/10',
 }
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

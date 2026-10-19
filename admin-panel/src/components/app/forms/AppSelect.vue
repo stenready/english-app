@@ -1,11 +1,13 @@
 <script setup lang="ts" generic="TValue">
 import { computed, useAttrs, useId, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AppFieldLabel from '@/components/app/forms/AppFieldLabel.vue'
 import AppValidationContainer from '@/components/app/forms/AppValidationContainer.vue'
 import IconCheck from '@/components/svg/IconCheck.vue'
 import IconChevronDown from '@/components/svg/IconChevronDown.vue'
 import IconClose from '@/components/svg/IconClose.vue'
 import inputSizes, { type InputSize } from '@/constants/inputSizes'
+import { hasRequiredRule } from '@/helpers/validationRules'
 import { useFloatingMenu } from '@/use/useFloatingMenu'
 import type { AppSelectOption } from '@/types/select'
 import type { ValidationRule } from '@/types/validation'
@@ -110,6 +112,10 @@ const isSelected = (value: TValue): boolean => {
   return isSameValue(value, model.value)
 }
 
+const isRequired = computed<boolean>(() => {
+  return hasRequiredRule(props.rules)
+})
+
 const selectedLabel = computed<string | undefined>(
   () => props.options.find((option) => isSelected(option.value))?.label,
 )
@@ -189,13 +195,13 @@ const clear = (): void => {
     :style="attrs.style"
   >
     <div :data-component-name="COMPONENT_NAME">
-      <label
+      <AppFieldLabel
         v-if="props.label"
         :for="getTriggerId()"
-        class="mb-2 block w-fit cursor-pointer text-[15px] leading-5 font-semibold text-foreground"
+        :is-required="isRequired"
       >
         {{ props.label }}
-      </label>
+      </AppFieldLabel>
 
       <div class="relative">
         <button

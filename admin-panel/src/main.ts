@@ -6,6 +6,7 @@ import router from './router'
 import { restoreSession } from './api'
 import './assets/tailwind.css'
 import './assets/main.scss'
+import 'vue-sonner/style.css'
 
 const app = createApp(App)
 

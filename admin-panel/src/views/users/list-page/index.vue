@@ -1,26 +1,34 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useForm } from 'vee-validate'
+import { useGlobalModal } from '@/use/useGlobalModal'
 import { useLoader } from '@/use/useLoader'
+import { rest } from '@/api'
 import AppButton from '@/components/app/AppButton.vue'
 import AppInput from '@/components/app/forms/AppInput.vue'
 import AppCard from '@/components/app/AppCard.vue'
 import AppDropdown from '@/components/app/AppDropdown.vue'
 import AppTable from '@/components/app/AppTable.vue'
-import IconEye from '@/components/svg/IconEye.vue'
 import IconPencil from '@/components/svg/IconPencil.vue'
 import IconPlus from '@/components/svg/IconPlus.vue'
 import IconTrash from '@/components/svg/IconTrash.vue'
 import IconSearch from '@/components/svg/IconSearch.vue'
 import IconUsers from '@/components/svg/IconUsers.vue'
 import { ruleMaxLength, ruleMinLength } from '@/helpers/validationRules'
-import recordStatuses, { type RecordStatus } from '@/constants/recordStatuses'
-import { userRecords } from '@/mocks/userRecords'
+import { processingError } from '@/helpers/apiErrors'
+import { dateFormats, formatDate } from '@/helpers/date'
+import buttonVariants from '@/constants/buttonVariants'
+import restUrls from '@/constants/restUrls'
+import routeNames from '@/constants/routeNames'
+import userStatuses, { type UserStatus } from '@/constants/userStatuses'
 import type { AppDropdownItem } from '@/types/dropdown'
 import { DEFAULT_TABLE_FIRST } from '@/constants/tablePagination'
 import type { AppTableColumn, AppTablePagination } from '@/types/table'
-import type { UserRecord } from '@/types/userRecord'
+import type { PageResponse } from '@/types/pagination'
+import type { User } from '@/types/user'
+import modalPositions from '@/constants/modalPositions'
 
 const PAGE_NAME = 'UsersListPage'
 
@@ -28,29 +36,29 @@ defineOptions({ name: PAGE_NAME })
 
 const SEARCH_MIN_LENGTH = 3
 const SEARCH_MAX_LENGTH = 50
-const SECRET_MASK_CHAR = '•'
 const INITIALS_COUNT = 2
 const USER_NAME_SEPARATOR = /[.\s_-]+/
 
 const recordActions = {
-  VIEW: 'view',
   EDIT: 'edit',
   DELETE: 'delete',
 } as const
 
 type RecordAction = (typeof recordActions)[keyof typeof recordActions]
 
-const STATUS_CLASSES: Record<RecordStatus, string> = {
-  [recordStatuses.ACTIVE]: 'bg-primary/10 text-primary',
-  [recordStatuses.PENDING]: 'bg-warning/10 text-warning',
-  [recordStatuses.BLOCKED]: 'bg-danger/10 text-danger',
+const STATUS_CLASSES: Record<UserStatus, string> = {
+  [userStatuses.ACTIVE]: 'bg-success/10 text-success',
+  [userStatuses.PENDING]: 'bg-warning/10 text-warning',
+  [userStatuses.BLOCKED]: 'bg-danger/10 text-danger',
 }
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
+const router = useRouter()
 
 const { handleSubmit, resetForm } = useForm()
 
 const { startLoading, stopLoading } = useLoader()
+const { showModal } = useGlobalModal()
 
 const filters = ref({ search: '' })
 const pagination = ref<AppTablePagination>({
@@ -60,64 +68,41 @@ const pagination = ref<AppTablePagination>({
   reverse: undefined,
 })
 
-// Current page from the server: already filtered, sorted and cut by first/skip
-const records = ref<UserRecord[]>([])
-
-const demoColumns = computed<AppTableColumn[]>(() => [
-  { key: 'id', label: t('users.demo.columnId'), isSortable: true },
-  {
-    key: 'userName',
-    label: t('users.demo.columnUserName'),
-    isSortable: true,
-  },
-  { key: 'status', label: t('users.demo.columnStatus'), isSortable: true },
-  { key: 'description', label: t('users.demo.columnDescription') },
-  { key: 'hash', label: t('users.demo.columnHash') },
-  { key: 'secretWord', label: t('users.demo.columnSecretWord') },
-  { key: 'email', label: t('users.demo.columnEmail'), isSortable: true },
-  { key: 'role', label: t('users.demo.columnRole'), isSortable: true },
-  { key: 'country', label: t('users.demo.columnCountry'), isSortable: true },
-  { key: 'ipAddress', label: t('users.demo.columnIpAddress') },
-  {
-    key: 'createdAt',
-    label: t('users.demo.columnCreatedAt'),
-    isSortable: true,
-  },
-  {
-    key: 'lastLoginAt',
-    label: t('users.demo.columnLastLoginAt'),
-    isSortable: true,
-  },
+// Current page from the server: already filtered and cut by first/skip
+const records = ref<User[]>([])
+// Found users in total: the table counts pages from it
+const totalCount = ref(0)
+// Not sortable: the API has no sorting yet
+const columns = computed<AppTableColumn[]>(() => [
+  { key: 'name', label: t('users.list.columnUser') },
+  { key: 'email', label: t('users.list.columnEmail') },
+  { key: 'status', label: t('users.list.columnStatus') },
+  { key: 'createdAt', label: t('users.list.columnCreatedAt') },
+  { key: 'updatedAt', label: t('users.list.columnUpdatedAt') },
   {
     key: 'actions',
-    label: t('users.demo.columnActions'),
+    label: t('users.list.columnActions'),
     isSticky: true,
-    thClassName: 'text-center',
+    thClassName: 'text-center w-4',
   },
 ])
 
-const statusLabels = computed<Record<RecordStatus, string>>(() => ({
-  [recordStatuses.ACTIVE]: t('users.demo.statusActive'),
-  [recordStatuses.PENDING]: t('users.demo.statusPending'),
-  [recordStatuses.BLOCKED]: t('users.demo.statusBlocked'),
+const statusLabels = computed<Record<UserStatus, string>>(() => ({
+  [userStatuses.ACTIVE]: t('users.status.active'),
+  [userStatuses.PENDING]: t('users.status.pending'),
+  [userStatuses.BLOCKED]: t('users.status.blocked'),
 }))
 
 const recordActionItems = computed<AppDropdownItem<RecordAction>[]>(() => [
   {
-    key: recordActions.VIEW,
-    label: t('users.demo.actionView'),
-    icon: IconEye,
-    isShow: true,
-  },
-  {
     key: recordActions.EDIT,
-    label: t('users.demo.actionEdit'),
+    label: t('users.list.actionEdit'),
     icon: IconPencil,
     isShow: true,
   },
   {
     key: recordActions.DELETE,
-    label: t('users.demo.actionDelete'),
+    label: t('users.list.actionDelete'),
     icon: IconTrash,
     danger: true,
     isShow: true,
@@ -129,33 +114,28 @@ const activeFiltersCount = computed<number>(
   () => [filters.value.search.trim()].filter(Boolean).length,
 )
 
-const formatDate = (value: string): string => {
-  return new Date(value).toLocaleDateString(locale.value)
+// Blocked users get a light danger tint
+const getRecordRowClass = (record: User): string | undefined => {
+  return record.status === userStatuses.BLOCKED ? 'bg-danger/5' : undefined
 }
 
-const formatDateTime = (value: string): string => {
-  return new Date(value).toLocaleString(locale.value)
-}
-
-// Blocked records get a light danger tint
-const getRecordRowClass = (record: UserRecord): string | undefined => {
-  return record.status === recordStatuses.BLOCKED ? 'bg-danger/5' : undefined
-}
-
-const getInitials = (userName: string): string => {
-  return userName
+const getInitials = (name: string): string => {
+  return name
     .split(USER_NAME_SEPARATOR)
     .slice(0, INITIALS_COUNT)
     .map((part) => part.charAt(0))
     .join('')
 }
 
-const maskSecret = (value: string): string => {
-  return SECRET_MASK_CHAR.repeat(value.length)
+const goToEdit = (record: User): void => {
+  router.push({
+    name: routeNames.USERS_EDIT,
+    params: { id: record.id },
+  })
 }
 
-const onRecordAction = (action: RecordAction, record: UserRecord): void => {
-  console.log(action, record)
+const goToCreate = (): void => {
+  router.push({ name: routeNames.USERS_CREATE })
 }
 
 const onPagination = (value: AppTablePagination): void => {
@@ -163,32 +143,66 @@ const onPagination = (value: AppTablePagination): void => {
   getList()
 }
 
+// Any filter change (search, reset, future filters) starts from the first page
+const applyFilters = (): void => {
+  pagination.value = { ...pagination.value, skip: 0 }
+  getList()
+}
+
 const resetFilters = (): void => {
   filters.value.search = ''
   resetForm()
-  getList()
+  applyFilters()
 }
 
 const getList = async (): Promise<void> => {
   startLoading()
 
   try {
-    const r = {
-      ...pagination.value,
-      ...filters.value,
-    }
-    console.log(r, 'request data')
-    // Mock response until the backend: the server will get pagination + filters
-    records.value = await Promise.resolve(userRecords)
-  } catch (err) {
-    console.error(err)
+    const { first, skip } = pagination.value
+    const { data, meta } = await rest.get<PageResponse<User>>(restUrls.USERS, {
+      // Empty search is left out: the server would treat it as no search anyway
+      query: { first, skip, search: filters.value.search.trim() || undefined },
+    })
+
+    records.value = data
+    totalCount.value = meta.totalCount
+  } catch (error) {
+    records.value = []
+    totalCount.value = 0
+    processingError(error, { showToast: true })
+  } finally {
+    stopLoading()
+  }
+}
+
+const deleteUser = async (record: User): Promise<void> => {
+  const isConfirmed = await showModal({
+    title: t('users.delete.title'),
+    description: t('users.delete.description', { name: record.name }),
+    confirmText: t('users.list.actionDelete'),
+    confirmVariant: buttonVariants.DANGER,
+    name: 'delete-user',
+    position: modalPositions.TOP,
+  })
+
+  if (!isConfirmed) return
+
+  startLoading()
+
+  try {
+    await rest.delete(restUrls.USER(record.id))
+    // The last user of a page: AppTable steps back a page by itself
+    await getList()
+  } catch (error) {
+    processingError(error, { showToast: true })
   } finally {
     stopLoading()
   }
 }
 
 // Runs only when the search rules pass
-const applySearch = handleSubmit(getList)
+const applySearch = handleSubmit(applyFilters)
 
 onMounted(() => {
   getList()
@@ -206,27 +220,28 @@ onMounted(() => {
       </template>
 
       <template #actions>
-        <AppButton>
+        <AppButton @click="goToCreate">
           <IconPlus />
           {{ t('users.list.addUser') }}
         </AppButton>
       </template>
 
       <AppTable
-        :columns="demoColumns"
+        :columns="columns"
         :rows="records"
         row-key="id"
         :tbody-tr-class="getRecordRowClass"
         sticky-header
-        :total-rows="records.length"
+        :total-rows="totalCount"
         is-show-first-selector
         is-show-pagination
         :filters-count="activeFiltersCount"
+        :pagination="pagination"
         @reset-filters="resetFilters"
-        @pagination="onPagination"
+        @update:pagination="onPagination"
       >
         <template #header>
-          {{ t('users.list.count', { count: records.length }) }}
+          {{ t('users.list.count', { count: totalCount }) }}
         </template>
 
         <template #filters>
@@ -243,7 +258,7 @@ onMounted(() => {
                 ruleMinLength(SEARCH_MIN_LENGTH),
                 ruleMaxLength(SEARCH_MAX_LENGTH),
               ]"
-              @clear="getList"
+              @clear="applyFilters"
             >
               <template #prevIcon>
                 <IconSearch />
@@ -256,19 +271,22 @@ onMounted(() => {
           </form>
         </template>
 
-        <template #cell-id="{ row }">
-          <span class="font-mono text-xs text-muted">#{{ row.id }}</span>
-        </template>
-
-        <template #cell-userName="{ row }">
+        <template #cell-name="{ row }">
           <div class="flex items-center gap-3 whitespace-nowrap">
+            <img
+              v-if="row.avatarUrl"
+              :src="row.avatarUrl"
+              alt=""
+              class="size-8 shrink-0 rounded-full object-cover"
+            />
             <span
+              v-else
               class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary uppercase"
               aria-hidden="true"
             >
-              {{ getInitials(row.userName) }}
+              {{ getInitials(row.name) }}
             </span>
-            <span class="font-medium">{{ row.userName }}</span>
+            <span class="font-medium">{{ row.name }}</span>
           </div>
         </template>
 
@@ -282,40 +300,8 @@ onMounted(() => {
           </span>
         </template>
 
-        <template #cell-description="{ row }">
-          <p class="line-clamp-2 max-w-sm min-w-64 text-muted">
-            {{ row.description }}
-          </p>
-        </template>
-
-        <template #cell-hash="{ row }">
-          <code
-            class="rounded-md border border-border bg-surface px-1.5 py-0.5 font-mono text-xs whitespace-nowrap text-muted"
-            >{{ row.hash }}</code
-          >
-        </template>
-
-        <template #cell-secretWord="{ row }">
-          <span
-            class="font-mono tracking-widest text-muted"
-            :aria-label="t('users.demo.secretHidden')"
-          >
-            {{ maskSecret(row.secretWord) }}
-          </span>
-        </template>
-
         <template #cell-email="{ row }">
           <span class="whitespace-nowrap">{{ row.email }}</span>
-        </template>
-
-        <template #cell-role="{ row }">
-          <span class="whitespace-nowrap capitalize">{{ row.role }}</span>
-        </template>
-
-        <template #cell-ipAddress="{ row }">
-          <code class="font-mono text-xs whitespace-nowrap">{{
-            row.ipAddress
-          }}</code>
         </template>
 
         <template #cell-createdAt="{ row }">
@@ -324,9 +310,9 @@ onMounted(() => {
           }}</span>
         </template>
 
-        <template #cell-lastLoginAt="{ row }">
+        <template #cell-updatedAt="{ row }">
           <span class="whitespace-nowrap text-muted">{{
-            formatDateTime(row.lastLoginAt)
+            formatDate(row.updatedAt, dateFormats.DATE_TIME)
           }}</span>
         </template>
 
@@ -334,8 +320,10 @@ onMounted(() => {
           <div class="flex justify-end">
             <AppDropdown
               :items="recordActionItems"
-              :label="t('users.demo.columnActions')"
-              @select="onRecordAction($event, row)"
+              :label="t('users.list.columnActions')"
+              :payload="row"
+              @edit="goToEdit"
+              @delete="deleteUser"
             />
           </div>
         </template>

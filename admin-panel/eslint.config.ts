@@ -16,6 +16,17 @@ export default [
       // Для <script lang="ts"> внутри .vue
       parserOptions: { parser: tseslint.parser },
     },
+    rules: {
+      // Функции всегда с телом в {}: const fn = () => { return … }.
+      // Только стрелки, присвоенные константе; колбэки (map, computed, watch…) не трогает
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'VariableDeclarator > ArrowFunctionExpression[body.type!="BlockStatement"]',
+          message: 'Пишите функцию с телом в {}: const fn = () => { return … }',
+        },
+      ],
+    },
   },
   prettierConfig,
 ]

@@ -92,6 +92,9 @@ import './assets/main.scss'
 | `--info-foreground`    | `text-info-foreground`               | Текст на `info`                                             |
 | `--warning`            | `bg-warning`, `text-warning`         | Попередження (кнопка `warning`)                             |
 | `--warning-foreground` | `text-warning-foreground`            | Текст на `warning`                                          |
+| `--danger-foreground`  | `text-danger-foreground`             | Текст на `danger` (кнопка `danger`)                         |
+| `--success`            | `bg-success`, `text-success`         | Успіх (статус «Активний»)                                   |
+| `--success-foreground` | `text-success-foreground`            | Текст на `success`                                          |
 | `--card` (радіус)      | `--radius-card: var(--card)`         | `rounded-card`                                              |
 | `--elevated` (тінь)    | `--shadow-elevated: var(--elevated)` | `shadow-elevated`                                           |
 

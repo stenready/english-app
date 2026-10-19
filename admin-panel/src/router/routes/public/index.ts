@@ -23,6 +23,7 @@ const publicRoutes: RouteRecordRaw[] = [
       layout: layoutNames.DASHBOARD,
       permissions: [permissions.READ_ABOUT_PAGE, permissions.EDIT_ABOUT_PAGE],
       isPrivate: false,
+      breadcrumbs: [{ titleKey: 'navigation.about' }],
     },
   },
 ]

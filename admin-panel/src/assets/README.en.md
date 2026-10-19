@@ -92,6 +92,9 @@ In `main.scss` — a short name **without** a prefix. In `tailwind.css` — the 
 | `--info-foreground`    | `text-info-foreground`               | Text on `info`                                              |
 | `--warning`            | `bg-warning`, `text-warning`         | Warning (`warning` button)                                  |
 | `--warning-foreground` | `text-warning-foreground`            | Text on `warning`                                           |
+| `--danger-foreground`  | `text-danger-foreground`             | Text on `danger` (`danger` button)                          |
+| `--success`            | `bg-success`, `text-success`         | Success ("Active" status)                                   |
+| `--success-foreground` | `text-success-foreground`            | Text on `success`                                           |
 | `--card` (radius)      | `--radius-card: var(--card)`         | `rounded-card`                                              |
 | `--elevated` (shadow)  | `--shadow-elevated: var(--elevated)` | `shadow-elevated`                                           |
 

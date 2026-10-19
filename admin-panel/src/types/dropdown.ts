@@ -1,7 +1,7 @@
 import type { Component } from 'vue'
 
 export interface AppDropdownItem<TKey extends string = string> {
-  // Emitted on select: @select="(key) => …"
+  // Names the item's own event: key "edit" → @edit="handler"; also comes in @select
   key: TKey
   label: string
   // An icon component from @/components/svg, shown before the label

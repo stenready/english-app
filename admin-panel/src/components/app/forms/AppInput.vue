@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed, useAttrs, useId, useTemplateRef } from 'vue'
+import { computed, ref, useAttrs, useId, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AppFieldLabel from '@/components/app/forms/AppFieldLabel.vue'
 import AppValidationContainer from '@/components/app/forms/AppValidationContainer.vue'
 import IconClose from '@/components/svg/IconClose.vue'
+import IconEye from '@/components/svg/IconEye.vue'
+import IconEyeOff from '@/components/svg/IconEyeOff.vue'
 import inputSizes, { type InputSize } from '@/constants/inputSizes'
+import { hasRequiredRule } from '@/helpers/validationRules'
 import type { ValidationRule } from '@/types/validation'
 
 const COMPONENT_NAME = 'AppInput'
@@ -50,11 +54,20 @@ const SIZE_CLASSES: Record<InputSize, string> = {
 }
 
 const WRAPPER_ATTRS = ['class', 'style']
+const PASSWORD_TYPE = 'password'
+const TEXT_TYPE = 'text'
 
 const { t } = useI18n()
 const attrs = useAttrs()
 const fallbackId = useId()
 const input = useTemplateRef<HTMLInputElement>('input')
+
+// type="password": the eye button shows the typed text
+const isPasswordShown = ref(false)
+
+const isRequired = computed<boolean>(() => {
+  return hasRequiredRule(props.rules)
+})
 
 const ariaLabel = computed<string | undefined>(
   () => props.label ?? props.placeholder,
@@ -68,6 +81,17 @@ const getInputAttrs = (): Record<string, unknown> => {
       Object.entries(attrs).filter(([name]) => !WRAPPER_ATTRS.includes(name)),
     ),
   }
+}
+
+// attrs aren't reactive: functions, not computed, so they're read on every render
+const isPassword = (): boolean => {
+  return attrs.type === PASSWORD_TYPE
+}
+
+const getInputType = (): string | undefined => {
+  if (isPassword() && isPasswordShown.value) return TEXT_TYPE
+
+  return typeof attrs.type === 'string' ? attrs.type : undefined
 }
 
 const getInputId = (): string => {
@@ -92,13 +116,13 @@ const clear = (): void => {
     :style="attrs.style"
   >
     <div :data-component-name="COMPONENT_NAME">
-      <label
+      <AppFieldLabel
         v-if="props.label"
         :for="getInputId()"
-        class="mb-2 block w-fit cursor-pointer text-[15px] leading-5 font-semibold text-foreground"
+        :is-required="isRequired"
       >
         {{ props.label }}
-      </label>
+      </AppFieldLabel>
 
       <label
         :class="[
@@ -122,10 +146,12 @@ const clear = (): void => {
           :id="getInputId()"
           ref="input"
           v-model="model"
+          :type="getInputType()"
           :name="props.name"
           :placeholder="props.placeholder ?? props.label"
           :aria-label="ariaLabel"
           :aria-invalid="invalid || undefined"
+          :aria-required="isRequired || undefined"
           :aria-describedby="errorId"
           :disabled="props.disabled"
           class="h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted disabled:cursor-not-allowed [&::-webkit-search-cancel-button]:appearance-none"
@@ -140,6 +166,24 @@ const clear = (): void => {
           @click="clear"
         >
           <IconClose />
+        </button>
+
+        <!-- mousedown.prevent: the input keeps focus (and the caret) on a click -->
+        <button
+          v-if="isPassword() && !props.disabled"
+          type="button"
+          class="flex shrink-0 cursor-pointer items-center rounded text-muted outline-none hover:text-foreground focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-primary"
+          :aria-label="
+            isPasswordShown
+              ? t('common.hidePassword')
+              : t('common.showPassword')
+          "
+          :aria-pressed="isPasswordShown"
+          @mousedown.prevent
+          @click="isPasswordShown = !isPasswordShown"
+        >
+          <IconEyeOff v-if="isPasswordShown" />
+          <IconEye v-else />
         </button>
 
         <span

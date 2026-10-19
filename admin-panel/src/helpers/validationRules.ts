@@ -1,4 +1,5 @@
 import i18n from '@/plugins/i18n'
+import { BYTES_IN_MEGABYTE } from '@/constants/imageUpload'
 import type { ValidationRule } from '@/types/validation'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -32,6 +33,11 @@ export const ruleRequired: ValidationRule<unknown> = (value, ctx) => {
   )
 }
 
+// The field is mandatory when its rules contain ruleRequired: the label gets an asterisk
+export const hasRequiredRule = (rules: readonly unknown[] = []): boolean => {
+  return rules.includes(ruleRequired)
+}
+
 // Empty value is valid: combine with ruleRequired when the field is mandatory
 export const ruleEmail: ValidationRule = (value, ctx) => {
   return (
@@ -59,4 +65,34 @@ export const ruleSameAs = (otherField: string): ValidationRule => {
   return (value, ctx) =>
     value === ctx.form[otherField] ||
     t('validation.sameAs', { field: getFieldName(ctx) })
+}
+
+// "image/png" → "PNG": short names for messages and hints
+export const formatFileTypes = (types: string[]): string => {
+  return types
+    .map((type) => (type.split('/')[1] ?? type).toUpperCase())
+    .join(', ')
+}
+
+// Files: empty (null) is valid, combine with ruleRequired when mandatory
+export const ruleFileType = (types: string[]): ValidationRule<File | null> => {
+  return (value, ctx) =>
+    !value ||
+    types.includes(value.type) ||
+    t('validation.fileType', {
+      field: getFieldName(ctx),
+      types: formatFileTypes(types),
+    })
+}
+
+export const ruleFileMaxSize = (
+  maxBytes: number,
+): ValidationRule<File | null> => {
+  return (value, ctx) =>
+    !value ||
+    value.size <= maxBytes ||
+    t('validation.fileMaxSize', {
+      field: getFieldName(ctx),
+      size: maxBytes / BYTES_IN_MEGABYTE,
+    })
 }

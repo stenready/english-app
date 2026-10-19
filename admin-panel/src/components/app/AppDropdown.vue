@@ -1,22 +1,43 @@
-<script setup lang="ts" generic="TKey extends string">
-import { computed, useId, useTemplateRef } from 'vue'
+<script setup lang="ts" generic="TKey extends string, TPayload = undefined">
+import {
+  camelize,
+  computed,
+  toHandlerKey,
+  useAttrs,
+  useId,
+  useTemplateRef,
+} from 'vue'
 import IconDots from '@/components/svg/IconDots.vue'
 import { useFloatingMenu } from '@/use/useFloatingMenu'
 import type { AppDropdownItem } from '@/types/dropdown'
 
 const COMPONENT_NAME = 'AppDropdown'
 
-defineOptions({ name: COMPONENT_NAME })
+// @edit, @delete… are item handlers, not DOM listeners: they must not land on the root
+defineOptions({ name: COMPONENT_NAME, inheritAttrs: false })
 
 const props = defineProps<{
   items: AppDropdownItem<TKey>[]
   // Accessible name of the icon-only trigger, e.g. t('…actions')
   label: string
+  // Passed to the item handler: @edit="goToEdit" → goToEdit(payload)
+  payload?: TPayload
 }>()
 
 const emit = defineEmits<{
-  select: [key: TKey]
+  select: [key: TKey, payload: TPayload | undefined]
 }>()
+
+const attrs = useAttrs()
+
+// Everything but the item handlers (class, data-*…) goes to the root as usual
+const rootAttrs = computed<Record<string, unknown>>(() => {
+  return Object.fromEntries(
+    Object.entries(attrs).filter(([name]) => {
+      return !/^on[A-Z]/.test(name)
+    }),
+  )
+})
 
 const visibleItems = computed<AppDropdownItem<TKey>[]>(() =>
   props.items.filter((item) => item.isShow !== false),
@@ -53,8 +74,13 @@ const hasDividerBefore = (index: number): boolean => {
   )
 }
 
+// Item "edit" → its own listener @edit; @select gets every item
 const select = (key: TKey): void => {
-  emit('select', key)
+  const handler = attrs[toHandlerKey(camelize(key))]
+
+  if (typeof handler === 'function') handler(props.payload)
+
+  emit('select', key, props.payload)
   close(true)
 }
 </script>
@@ -62,6 +88,7 @@ const select = (key: TKey): void => {
 <template>
   <div
     v-if="visibleItems.length"
+    v-bind="rootAttrs"
     :data-component-name="COMPONENT_NAME"
     class="inline-flex"
   >

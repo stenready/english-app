@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TRow extends object">
-import { computed, ref, useId, watch } from 'vue'
+import { computed, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppPagination from '@/components/app/AppPagination.vue'
 import AppButton from '@/components/app/AppButton.vue'
@@ -28,9 +28,9 @@ const props = defineProps<{
   // Rows scroll inside the table (up to the screen height) and the header stays.
   // CSS can't stick it to the page scroll: the horizontal scroll container catches it
   stickyHeader?: boolean
-  // "First 10/20/…" selector in the header; the choice comes in @pagination
+  // "First 10/20/…" selector in the header; the choice comes in v-model:pagination
   isShowFirstSelector?: boolean
-  // Page buttons in the header; the choice comes in @pagination as { first, skip }
+  // Page buttons in the header; the choice comes in v-model:pagination
   isShowPagination?: boolean
   // All rows across pages (the table itself only gets the current page)
   totalRows?: number
@@ -39,13 +39,16 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  pagination: [pagination: AppTablePagination]
   // ✕ on the Filter button: the page clears its filters
   resetFilters: []
 }>()
 
-// Optional v-model:first to set or read it from above; works on its own without it
-const first = defineModel<number>('first', { default: DEFAULT_TABLE_FIRST })
+// v-model:pagination (or :pagination + @update:pagination to send a request):
+// the page sets first/skip from above (e.g. skip: 0 on a new search) and the table
+// shows them; without it the table keeps its own state from the default
+const pagination = defineModel<AppTablePagination>('pagination', {
+  default: () => ({ first: DEFAULT_TABLE_FIRST, skip: 0 }),
+})
 
 // Optional v-model:filters-open, e.g. to keep the panel open while filters are applied
 const isFiltersOpen = defineModel<boolean>('filtersOpen', { default: false })
@@ -73,56 +76,60 @@ const firstOptions = computed<AppSelectOption<number>[]>(() =>
 
 const FIRST_PAGE = 1
 
-// Kept inside: outside only first/skip matter
-const page = ref(FIRST_PAGE)
-const sortKey = ref<string>()
-const reverse = ref<boolean>()
+// Derived from skip: the page number lives only in pagination
+const page = computed<number>(() => {
+  return Math.floor(pagination.value.skip / pagination.value.first) + FIRST_PAGE
+})
 
 const totalRowsCount = computed<number>(
   () => props.totalRows ?? props.rows.length,
 )
 
 const pageCount = computed<number>(() =>
-  Math.max(FIRST_PAGE, Math.ceil(totalRowsCount.value / first.value)),
+  Math.max(
+    FIRST_PAGE,
+    Math.ceil(totalRowsCount.value / pagination.value.first),
+  ),
 )
 
-// The table only reports the choice: the page decides which rows to show
-// (slice locally now, a first/skip request later)
-const emitPagination = (): void => {
-  emit('pagination', {
-    first: first.value,
-    skip: (page.value - FIRST_PAGE) * first.value,
-    sortKey: sortKey.value,
-    reverse: reverse.value,
-  })
+// One assignment = one update:pagination event = one request
+const updatePagination = (changes: Partial<AppTablePagination>): void => {
+  pagination.value = { ...pagination.value, ...changes }
+}
+
+const getSkip = (pageNumber: number): number => {
+  return (pageNumber - FIRST_PAGE) * pagination.value.first
+}
+
+// A new page size starts from the first page
+const onFirstChange = (first: number): void => {
+  updatePagination({ first, skip: 0 })
 }
 
 // A new column starts ascending, the same one flips; the order changes, so back to page 1
 const sortBy = (key: string): void => {
-  if (sortKey.value === key) {
-    reverse.value = !reverse.value
-  } else {
-    sortKey.value = key
-    reverse.value = false
-  }
+  const { sortKey, reverse } = pagination.value
 
-  page.value = FIRST_PAGE
-  emitPagination()
+  updatePagination({
+    sortKey: key,
+    reverse: sortKey === key ? !reverse : false,
+    skip: 0,
+  })
 }
 
 const getSortDirection = (key: string): 'asc' | 'desc' | undefined => {
-  if (sortKey.value !== key) return undefined
+  if (pagination.value.sortKey !== key) return undefined
 
-  return reverse.value ? 'desc' : 'asc'
+  return pagination.value.reverse ? 'desc' : 'asc'
 }
 
 const getAriaSort = (
   column: AppTableColumn,
 ): 'ascending' | 'descending' | 'none' | undefined => {
   if (!column.isSortable) return undefined
-  if (sortKey.value !== column.key) return 'none'
+  if (pagination.value.sortKey !== column.key) return 'none'
 
-  return reverse.value ? 'descending' : 'ascending'
+  return pagination.value.reverse ? 'descending' : 'ascending'
 }
 
 // Hidden when everything fits on one page
@@ -131,23 +138,12 @@ const isPaginationVisible = computed<boolean>(
 )
 
 const onPageChange = (value: number): void => {
-  page.value = value
-  emitPagination()
+  updatePagination({ skip: getSkip(value) })
 }
 
-// One watcher, one event (a backend gets one request):
-// a new page size starts from the first page; fewer rows (e.g. after a search)
-// may leave the current page out of range
-watch([first, pageCount], ([newFirst, count], [oldFirst]) => {
-  if (newFirst !== oldFirst) {
-    page.value = FIRST_PAGE
-  } else if (page.value > count) {
-    page.value = count
-  } else {
-    return
-  }
-
-  emitPagination()
+// Fewer rows (e.g. rows deleted) may leave the current page out of range
+watch(pageCount, (count) => {
+  if (page.value > count) updatePagination({ skip: getSkip(count) })
 })
 
 // A column key may be virtual (e.g. "actions"), so it is not tied to keyof TRow
@@ -204,14 +200,15 @@ const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
           v-if="isPaginationVisible"
           :page="page"
           :total-rows="totalRowsCount"
-          :per-page="first"
+          :per-page="pagination.first"
           @update:page="onPageChange"
         />
         <AppSelect
           v-if="props.isShowFirstSelector"
-          v-model="first"
+          :model-value="pagination.first"
           :options="firstOptions"
           :aria-label="t('table.pageSize')"
+          @update:model-value="onFirstChange"
         />
         <!-- Filter toggle + ✕ reset as one group: a button can't contain a button -->
         <div v-if="$slots.filters" class="relative inline-flex">
@@ -304,7 +301,9 @@ const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
                 v-if="column.isSortable"
                 type="button"
                 class="group/sort inline-flex cursor-pointer items-center gap-1 rounded uppercase outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-primary/30"
-                :class="{ 'text-foreground': sortKey === column.key }"
+                :class="{
+                  'text-foreground': pagination.sortKey === column.key,
+                }"
                 @click="sortBy(column.key)"
               >
                 <slot :name="`head-${column.key}`" :column="column">
@@ -314,7 +313,7 @@ const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
                   class="size-3.5 shrink-0 transition-opacity"
                   :class="{
                     'opacity-50 group-hover/sort:opacity-100':
-                      sortKey !== column.key,
+                      pagination.sortKey !== column.key,
                   }"
                   :direction="getSortDirection(column.key)"
                 />

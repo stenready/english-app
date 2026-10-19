@@ -4,6 +4,8 @@ import errorCodes, { type ErrorCode } from './errorCodes'
 
 interface ServerErrorBody {
   error?: {
+    // Machine-readable: "USER_NOT_FOUND", "VALIDATION_FAILED"… (backend ERROR_CODES)
+    code?: string
     message?: string
     details?: unknown
   }
@@ -13,6 +15,8 @@ interface AppErrorOptions {
   code?: ErrorCode
   // null: no HTTP error status (network failure, GraphQL errors, client-side error)
   statusCode?: number | null
+  // The server's own code; null when the error didn't come from the server
+  serverCode?: string | null
   details?: unknown
   cause?: unknown
 }
@@ -38,6 +42,7 @@ const getHttpErrorCode = (statusCode: number | undefined): ErrorCode => {
 export class AppError extends Error {
   readonly code: ErrorCode
   readonly statusCode: number | null
+  readonly serverCode: string | null
   readonly details: unknown
 
   constructor(
@@ -45,6 +50,7 @@ export class AppError extends Error {
     {
       code = errorCodes.UNKNOWN,
       statusCode = null,
+      serverCode = null,
       details,
       cause,
     }: AppErrorOptions = {},
@@ -53,6 +59,7 @@ export class AppError extends Error {
     this.name = 'AppError'
     this.code = code
     this.statusCode = statusCode
+    this.serverCode = serverCode
     this.details = details
   }
 
@@ -67,6 +74,7 @@ export class AppError extends Error {
       return new AppError(body?.error?.message ?? error.message, {
         code: getHttpErrorCode(error.statusCode),
         statusCode: error.statusCode ?? null,
+        serverCode: body?.error?.code ?? null,
         details: body?.error?.details,
         cause: error,
       })

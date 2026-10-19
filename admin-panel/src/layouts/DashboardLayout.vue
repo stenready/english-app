@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import TheBreadcrumbs from '@/components/the/TheBreadcrumbs.vue'
 import TheLocaleSwitcher from '@/components/the/TheLocaleSwitcher.vue'
 import IconUsers from '@/components/svg/IconUsers.vue'
 import routeNames from '@/constants/routeNames'
@@ -18,18 +19,23 @@ const { t } = useI18n()
     class="flex h-screen flex-col bg-canvas bg-canvas-gradient text-foreground"
   >
     <header class="flex h-14 shrink-0 items-center gap-3 px-4">
-      <RouterLink
-        :to="{ name: routeNames.HOME }"
-        class="flex items-center gap-2 rounded-md px-2 py-1 font-semibold hover:bg-nav-hover"
-      >
-        <span
-          class="flex size-7 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground"
-          aria-hidden="true"
+      <!-- w-60 + px-4 = the sidebar width: crumbs start where the page panel does -->
+      <div class="w-60 shrink-0">
+        <RouterLink
+          :to="{ name: routeNames.HOME }"
+          class="inline-flex items-center gap-2 rounded-md px-2 py-1 font-semibold hover:bg-nav-hover"
         >
-          {{ t('layout.appName').charAt(0) }}
-        </span>
-        {{ t('layout.appName') }}
-      </RouterLink>
+          <span
+            class="flex size-7 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground"
+            aria-hidden="true"
+          >
+            {{ t('layout.appName').charAt(0) }}
+          </span>
+          {{ t('layout.appName') }}
+        </RouterLink>
+      </div>
+
+      <TheBreadcrumbs class="min-w-0" />
 
       <TheLocaleSwitcher class="ml-auto" />
     </header>
