@@ -7,11 +7,18 @@ export type { UserInput } from '#validation/user'
 // (omitted for every query in #db/client)
 export type User = Omit<UserRecord, 'passwordHash'>
 
-// What the API returns: avatarKey plus a ready link to show
-export type UserResponse = User & { avatarUrl: string | null }
+// What the API returns: avatarKey plus ready links: the thumbnail and the full-size copy
+export type UserResponse = User & {
+  avatarUrl: string | null
+  avatarOriginalUrl: string | null
+}
 
 // What the repository writes: the service has already hashed the password
-export type UserCreateData = Omit<UserInput, 'password'> & { passwordHash: string }
+export type UserCreateData = Omit<UserInput, 'password' | 'blockReason'> & {
+  passwordHash: string
+  // null clears it
+  blockReason?: string | null
+}
 
 export type UserUpdateData = Partial<UserCreateData>
 

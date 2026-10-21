@@ -7,6 +7,8 @@ const NAME_MIN_LENGTH = 2
 const PASSWORD_MIN_LENGTH = 8
 // argon2 takes any length; the cap only limits the hashing cost of a huge body
 const PASSWORD_MAX_LENGTH = 128
+// Same limit as the admin block form
+const BLOCK_REASON_MAX_LENGTH = 500
 // Same limit as the admin search input
 const SEARCH_MAX_LENGTH = 50
 // Only keys that POST /uploads/images creates for avatars: user/avatars/<uuid>.webp
@@ -15,7 +17,7 @@ const AVATAR_KEY_PATTERN = new RegExp(
 )
 
 // Body of POST /users. Emails are case-insensitive: normalized before the check
-export const userInputSchema = z.object({
+const userFieldsSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
   name: z.string().trim().min(NAME_MIN_LENGTH),
   // Not trimmed: spaces are valid password characters
@@ -24,10 +26,26 @@ export const userInputSchema = z.object({
   avatarKey: z.string().regex(AVATAR_KEY_PATTERN).nullable().optional(),
   // No status: the database default (ACTIVE)
   status: z.enum(UserStatus).optional(),
+  // Only with status BLOCKED; any other status clears it
+  blockReason: z.string().trim().min(1).max(BLOCK_REASON_MAX_LENGTH).optional(),
 })
 
+const isBlockReasonGiven = (data: { status?: UserStatus; blockReason?: string }): boolean => {
+  return data.status !== UserStatus.BLOCKED || Boolean(data.blockReason)
+}
+
+const BLOCK_REASON_REQUIRED = {
+  path: ['blockReason'],
+  message: 'Required when the status is BLOCKED.',
+}
+
+// Refined separately: Zod can't .partial() a schema that already has a refinement
+export const userInputSchema = userFieldsSchema.refine(isBlockReasonGiven, BLOCK_REASON_REQUIRED)
+
 // Body of PATCH /users/:id: only the fields that change; no password keeps the old one
-export const userUpdateSchema = userInputSchema.partial()
+export const userUpdateSchema = userFieldsSchema
+  .partial()
+  .refine(isBlockReasonGiven, BLOCK_REASON_REQUIRED)
 
 // GET /users?first=10&skip=0&search=stas
 export const userListQuerySchema = pageParamsSchema.extend({

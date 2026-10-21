@@ -19,6 +19,8 @@ model User {
   avatarKey    String?    @map("avatar_key")
   // Users added from the admin are active right away; sign-up will set PENDING
   status       UserStatus @default(ACTIVE)
+  // Why the user was blocked; null for any other status
+  blockReason  String?    @map("block_reason")
   // Optional for now: existing users have no role yet
   roleId       String?    @map("role_id") @db.Uuid
   role         Role?      @relation(fields: [roleId], references: [id])

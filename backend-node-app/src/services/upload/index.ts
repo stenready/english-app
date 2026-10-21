@@ -4,6 +4,7 @@ import { ERROR_CODES } from '#constants/errorCodes'
 import { HTTP_STATUS } from '#constants/httpStatus'
 import { UPLOAD_FOLDERS, type UploadFolder } from '#constants/uploads'
 import { AppError } from '#errors/AppError'
+import { getOriginalKey } from '#helpers/imageKeys'
 import storage from '#storage/s3'
 import { parseOrThrow } from '#validation/parseOrThrow'
 import { imageUploadSchema } from '#validation/upload'
@@ -13,6 +14,8 @@ const ACCEPTED_FORMATS = new Set(['jpeg', 'png', 'webp'])
 const OUTPUT_CONTENT_TYPE = 'image/webp'
 const OUTPUT_EXTENSION = 'webp'
 const WEBP_QUALITY = 82
+// The full-size copy for viewing: the longer side at most, never upscaled
+const ORIGINAL_MAX_SIZE = 2048
 
 interface ImagePreset {
   width: number
@@ -20,7 +23,7 @@ interface ImagePreset {
   fit: keyof FitEnum
 }
 
-// How each folder stores its images: avatars are small squares
+// The thumbnail of each folder: avatars are small squares
 const IMAGE_PRESETS: Record<UploadFolder, ImagePreset> = {
   [UPLOAD_FOLDERS.USER_AVATARS]: { width: 256, height: 256, fit: 'cover' },
 }
@@ -28,8 +31,15 @@ const IMAGE_PRESETS: Record<UploadFolder, ImagePreset> = {
 export interface UploadedFile {
   // Saved in the database (e.g. users.avatar_key)
   key: string
-  // For showing right away
+  // The thumbnail, for showing right away
   url: string
+  // The full-size copy, for viewing
+  originalUrl: string
+}
+
+interface ProcessedImage {
+  thumbnail: Buffer
+  original: Buffer
 }
 
 const createInvalidImageError = (): AppError => {
@@ -42,7 +52,7 @@ const createInvalidImageError = (): AppError => {
 
 // Decoding is the real type check: the file name and Content-Type come from the client.
 // Re-encoding also drops EXIF (GPS location from phone photos) and anything hidden in the file
-const processImage = async (buffer: Buffer, preset: ImagePreset): Promise<Buffer> => {
+const processImage = async (buffer: Buffer, preset: ImagePreset): Promise<ProcessedImage> => {
   try {
     const image = sharp(buffer)
     const { format } = await image.metadata()
@@ -51,11 +61,23 @@ const processImage = async (buffer: Buffer, preset: ImagePreset): Promise<Buffer
       throw createInvalidImageError()
     }
 
-    return await image
-      .autoOrient()
-      .resize(preset.width, preset.height, { fit: preset.fit })
-      .webp({ quality: WEBP_QUALITY })
-      .toBuffer()
+    const [thumbnail, original] = await Promise.all([
+      image
+        .clone()
+        .autoOrient()
+        .resize(preset.width, preset.height, { fit: preset.fit })
+        .webp({ quality: WEBP_QUALITY })
+        .toBuffer(),
+      // The whole photo, not cropped
+      image
+        .clone()
+        .autoOrient()
+        .resize(ORIGINAL_MAX_SIZE, ORIGINAL_MAX_SIZE, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: WEBP_QUALITY })
+        .toBuffer(),
+    ])
+
+    return { thumbnail, original }
   } catch (error) {
     if (error instanceof AppError) throw error
 
@@ -78,13 +100,21 @@ const uploadImage = async (
     )
   }
 
-  const body = await processImage(file.buffer, IMAGE_PRESETS[folder])
+  const { thumbnail, original } = await processImage(file.buffer, IMAGE_PRESETS[folder])
   // Random name: the client's file name is never used (../, spaces, collisions)
   const key = `${folder}/${randomUUID()}.${OUTPUT_EXTENSION}`
+  const originalKey = getOriginalKey(key)
 
-  await storage.uploadObject({ key, body, contentType: OUTPUT_CONTENT_TYPE })
+  await Promise.all([
+    storage.uploadObject({ key, body: thumbnail, contentType: OUTPUT_CONTENT_TYPE }),
+    storage.uploadObject({ key: originalKey, body: original, contentType: OUTPUT_CONTENT_TYPE }),
+  ])
 
-  return { key, url: storage.getPublicUrl(key) }
+  return {
+    key,
+    url: storage.getPublicUrl(key),
+    originalUrl: storage.getPublicUrl(originalKey),
+  }
 }
 
 export default { uploadImage }
