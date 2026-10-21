@@ -16,6 +16,8 @@ defineOptions({ name: COMPONENT_NAME, inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
+    // Unique on the page: data-name for tests and devtools. Not the form field name
+    dataName: string
     size?: InputSize
     label?: string
     name?: string
@@ -115,7 +117,7 @@ const clear = (): void => {
     :class="attrs.class"
     :style="attrs.style"
   >
-    <div :data-component-name="COMPONENT_NAME">
+    <div :data-component-name="COMPONENT_NAME" :data-name="props.dataName">
       <AppFieldLabel
         v-if="props.label"
         :for="getInputId()"

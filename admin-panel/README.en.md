@@ -140,6 +140,20 @@ defineOptions({ name: COMPONENT_NAME })
 | Page      | `PAGE_NAME`      | `data-page-name`      | `<Section><Page>Page`: `UsersListPage`, `HomeMainPage` |
 | Component | `COMPONENT_NAME` | `data-component-name` | Same as the file name: `UserCard`                      |
 
+**Elements: `data-name`.** Form fields (`AppInput`, `AppTextArea`, `AppSelect`, `AppImageUpload`) and `AppButton` have a **required** `dataName` prop — it becomes the `data-name` attribute. Native `<form>` elements get `data-name` as an attribute.
+
+```vue
+<form data-name="user-form">
+  <AppInput v-model="form.email" data-name="user-email" name="email" />
+  <AppButton data-name="user-edit-submit" type="submit">…</AppButton>
+</form>
+```
+
+- **Why:** tests find elements by `data-name` — they don't break when texts, translations or Tailwind classes change; in DevTools you see at once what an element is (`Cmd+F` → `[data-name="user-email"]`), and a project search leads to its place in the code.
+- **Format:** kebab-case with a section prefix: `user-email`, `user-edit-submit`, `users-search-form`.
+- **Uniqueness:** within the page. An element inside a component builds its name from the component's: `` `${props.dataName}-remove` `` → `user-avatar-remove`.
+- `dataName` is not `name`: `name` registers the field in the vee-validate form, so only form fields have it.
+
 ### 4. Routes and navigation
 
 - Every route has a `name` from `constants/routeNames.ts`.

@@ -25,6 +25,9 @@ const props = defineProps<{
   // Extra classes for a row, e.g. (row) => (row.isBlocked ? 'bg-danger/5' : undefined).
   // Use colors, not opacity: a faded sticky cell would show the columns under it
   tbodyTrClass?: (row: TRow, index: number) => string | undefined
+  // @row-click. A prop, not an emit: the table must know if anyone listens,
+  // only then rows get the pointer cursor and keyboard focus
+  onRowClick?: (row: TRow) => void
   // Rows scroll inside the table (up to the screen height) and the header stays.
   // CSS can't stick it to the page scroll: the horizontal scroll container catches it
   stickyHeader?: boolean
@@ -159,6 +162,16 @@ const getRowClass = (row: TRow, index: number): string | undefined => {
   return props.tbodyTrClass?.(row, index)
 }
 
+// Controls inside the row (actions menu, links…) handle their own clicks
+const INTERACTIVE_SELECTOR =
+  'a, button, input, select, textarea, label, [role="button"]'
+
+const onRowClick = (event: MouseEvent, row: TRow): void => {
+  if ((event.target as HTMLElement).closest(INTERACTIVE_SELECTOR)) return
+
+  props.onRowClick?.(row)
+}
+
 // Opaque background so scrolled columns don't show through; the inset shadow
 // is the divider (a border would vanish with collapsed table borders)
 const STICKY_CLASS = 'sticky right-0 z-10 shadow-[inset_1px_0_0_var(--border)]'
@@ -205,6 +218,7 @@ const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
         />
         <AppSelect
           v-if="props.isShowFirstSelector"
+          data-name="table-first"
           :model-value="pagination.first"
           :options="firstOptions"
           :aria-label="t('table.pageSize')"
@@ -213,6 +227,7 @@ const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
         <!-- Filter toggle + ✕ reset as one group: a button can't contain a button -->
         <div v-if="$slots.filters" class="relative inline-flex">
           <AppButton
+            data-name="table-filters-toggle"
             variant="outline"
             :class="{ 'rounded-r-none': props.filtersCount }"
             :aria-expanded="isFiltersOpen"
@@ -230,6 +245,7 @@ const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
           </AppButton>
           <AppButton
             v-if="props.filtersCount"
+            data-name="table-filters-reset"
             variant="outline"
             class="-ml-px rounded-l-none px-3"
             :aria-label="t('table.resetFilters')"
@@ -329,8 +345,14 @@ const STICKY_HEADER_MAX_HEIGHT = 'max-h-[calc(100dvh-12rem)]'
           <tr
             v-for="(row, index) in rows"
             :key="getRowKey(row)"
-            class="group transition-colors hover:bg-surface"
-            :class="getRowClass(row, index)"
+            class="group transition-colors outline-none hover:bg-surface focus-visible:bg-surface"
+            :class="[
+              getRowClass(row, index),
+              { 'cursor-pointer': props.onRowClick },
+            ]"
+            :tabindex="props.onRowClick ? 0 : undefined"
+            @click="onRowClick($event, row)"
+            @keydown.enter.self="props.onRowClick?.(row)"
           >
             <td
               v-for="column in columns"

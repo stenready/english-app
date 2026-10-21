@@ -32,11 +32,16 @@ const onModalUpdate = (value: boolean): void => {
     @closed="clear"
   >
     <template #footer>
-      <AppButton :variant="buttonVariants.OUTLINE" @click="settle(false)">
+      <AppButton
+        data-name="confirm-modal-cancel"
+        :variant="buttonVariants.OUTLINE"
+        @click="settle(false)"
+      >
         {{ request.settings.cancelText ?? t('common.cancel') }}
       </AppButton>
       <!-- autofocus: AppModal focuses it on open, Enter confirms -->
       <AppButton
+        data-name="confirm-modal-confirm"
         :variant="request.settings.confirmVariant ?? buttonVariants.PRIMARY"
         autofocus
         @click="settle(true)"

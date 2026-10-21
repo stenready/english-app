@@ -42,6 +42,8 @@ const FOLDER_FIELD = 'folder'
 
 const props = withDefaults(
   defineProps<{
+    // Unique on the page: data-name for tests and devtools. Not the form field name
+    dataName: string
     // Where the server stores the file; only folders it allows (constants/uploadFolders)
     folder: UploadFolder
     // instant: upload on select; manual: only when save() is called
@@ -52,6 +54,8 @@ const props = withDefaults(
     rules?: ValidationRule<File | null>[]
     // Link to the image of the current key (e.g. user.avatarUrl): shown in edit forms
     url?: string | null
+    // Full-size copy of the current key (e.g. user.avatarOriginalUrl): the preview modal
+    originalUrl?: string | null
     types?: string[]
     // Bytes
     maxSize?: number
@@ -62,6 +66,7 @@ const props = withDefaults(
     name: undefined,
     rules: () => [],
     url: null,
+    originalUrl: null,
     types: () => IMAGE_UPLOAD_TYPES,
     maxSize: IMAGE_UPLOAD_MAX_SIZE,
   },
@@ -84,6 +89,7 @@ const pendingFile = ref<File | null>(null)
 const previewUrl = ref<string>()
 // Link from the server for the current key
 const uploadedUrl = ref<string | null>(props.url)
+const uploadedOriginalUrl = ref<string | null>(props.originalUrl)
 const isUploading = ref(false)
 // Instant mode: save() waits for it, so the form doesn't send the old key
 let instantUpload: Promise<boolean> = Promise.resolve(true)
@@ -96,6 +102,13 @@ watch(
   () => props.url,
   (value) => {
     uploadedUrl.value = value
+  },
+)
+
+watch(
+  () => props.originalUrl,
+  (value) => {
+    uploadedOriginalUrl.value = value
   },
 )
 
@@ -119,6 +132,13 @@ const shownImage = computed<string | null>(() => {
   if (previewUrl.value) return previewUrl.value
 
   return model.value ? uploadedUrl.value : null
+})
+
+// The modal shows the full-size copy: the thumbnail is too small to view
+const previewImage = computed<string | null>(() => {
+  if (previewUrl.value) return previewUrl.value
+
+  return model.value ? (uploadedOriginalUrl.value ?? uploadedUrl.value) : null
 })
 
 const hint = computed<string>(() => {
@@ -160,6 +180,7 @@ const upload = async (value: File): Promise<boolean> => {
 
     model.value = data.key
     uploadedUrl.value = data.url
+    uploadedOriginalUrl.value = data.originalUrl
     pendingFile.value = null
 
     return true
@@ -241,7 +262,7 @@ const remove = (): void => {
     :label="props.label"
     :value="file"
   >
-    <div :data-component-name="COMPONENT_NAME">
+    <div :data-component-name="COMPONENT_NAME" :data-name="props.dataName">
       <AppFieldLabel
         v-if="props.label"
         :for="inputId"
@@ -339,6 +360,7 @@ const remove = (): void => {
 
           <AppButton
             v-if="(shownImage || file) && !isUploading"
+            :data-name="`${props.dataName}-remove`"
             variant="outline"
             size="sm"
             class="mt-2 w-fit"
@@ -358,8 +380,8 @@ const remove = (): void => {
         size="xl"
       >
         <img
-          v-if="shownImage"
-          :src="shownImage"
+          v-if="previewImage"
+          :src="previewImage"
           :alt="file?.name ?? props.label ?? ''"
           class="mx-auto max-h-[70dvh] w-auto max-w-full rounded-lg object-contain"
         />

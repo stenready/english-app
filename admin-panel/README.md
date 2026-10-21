@@ -140,6 +140,20 @@ defineOptions({ name: COMPONENT_NAME })
 | Сторінка  | `PAGE_NAME`      | `data-page-name`      | `<Розділ><Сторінка>Page`: `UsersListPage`, `HomeMainPage` |
 | Компонент | `COMPONENT_NAME` | `data-component-name` | Збігається з ім'ям файлу: `UserCard`                      |
 
+**Елементи: `data-name`.** Поля форм (`AppInput`, `AppTextArea`, `AppSelect`, `AppImageUpload`) і `AppButton` мають **обов'язковий** проп `dataName` — він стає атрибутом `data-name`. Нативним `<form>` ставимо `data-name` атрибутом.
+
+```vue
+<form data-name="user-form">
+  <AppInput v-model="form.email" data-name="user-email" name="email" />
+  <AppButton data-name="user-edit-submit" type="submit">…</AppButton>
+</form>
+```
+
+- **Навіщо:** тести шукають елемент за `data-name` — вони не ламаються, коли змінюються тексти, переклади чи класи Tailwind; у DevTools одразу видно, що це за елемент (`Cmd+F` → `[data-name="user-email"]`), а пошук по проєкту веде до місця в коді.
+- **Формат:** kebab-case із префіксом розділу: `user-email`, `user-edit-submit`, `users-search-form`.
+- **Унікальність:** у межах сторінки. Елемент усередині компонента будує ім'я від імені компонента: `` `${props.dataName}-remove` `` → `user-avatar-remove`.
+- `dataName` — не те саме, що `name`: `name` реєструє поле у формі vee-validate, тож його мають лише поля форм.
+
 ### 4. Роути та навігація
 
 - Кожен роут має `name` з `constants/routeNames.ts`.

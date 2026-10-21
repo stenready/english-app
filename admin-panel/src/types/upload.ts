@@ -2,6 +2,8 @@
 export interface UploadedFile {
   // Saved with the entity, e.g. user.avatarKey
   key: string
-  // Public link for showing the image
+  // Public link to the thumbnail
   url: string
+  // Public link to the full-size copy: for viewing
+  originalUrl: string
 }

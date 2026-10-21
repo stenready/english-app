@@ -9,7 +9,11 @@ export interface User {
   avatarKey: string | null
   // Ready link to the avatar, built by the server from avatarKey
   avatarUrl: string | null
+  // The full-size copy: for viewing
+  avatarOriginalUrl: string | null
   status: UserStatus
+  // Why the user was blocked; null for any other status
+  blockReason: string | null
   roleId: string | null
   createdAt: string
   updatedAt: string

@@ -22,6 +22,7 @@ const LOCALE_OPTIONS: AppSelectOption<Locale>[] = [
   <div :data-component-name="COMPONENT_NAME" class="inline-flex">
     <AppSelect
       v-model="locale"
+      data-name="locale-switcher"
       :options="LOCALE_OPTIONS"
       size="sm"
       :aria-label="t('navigation.language')"

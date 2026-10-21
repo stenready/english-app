@@ -8,6 +8,8 @@ defineOptions({ name: COMPONENT_NAME })
 
 const props = withDefaults(
   defineProps<{
+    // Unique on the page: data-name for tests and devtools
+    dataName: string
     variant?: ButtonVariant
     size?: ButtonSize
     // Native default is "submit": any button inside a form would submit it
@@ -57,6 +59,7 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
 <template>
   <button
     :data-component-name="COMPONENT_NAME"
+    :data-name="props.dataName"
     :type="props.type"
     :disabled="props.disabled"
     :class="[VARIANT_CLASSES[props.variant], SIZE_CLASSES[props.size]]"
